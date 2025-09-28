@@ -14,6 +14,7 @@ interface Customer {
   address: string;
   occupation: string;
   account_number: string;
+   balance: number;
 }
 
 export default function ExistingCustomers() {
@@ -32,37 +33,33 @@ export default function ExistingCustomers() {
     fetchCustomers();
   }, []);
 
-  // Delete customer
   const handleDelete = async (id: number) => {
     const confirmed = confirm("Are you sure you want to delete this customer?");
     if (!confirmed) return;
 
-    const { error } = await supabase.from("customers").delete().eq("id", id);
+    const { error } = await supabase.from("customers").delete().eq("id", id).select();
     if (error) console.error(error);
     else {
-      // Remove deleted customer from state immediately
       setCustomers(customers.filter((c) => c.id !== id));
     }
   };
 
-  // Start editing
   const handleEdit = (customer: Customer) => {
     setEditingCustomer(customer);
-    setFormData({ ...customer }); // Copy customer data to formData
+    setFormData({ ...customer });
   };
 
-  // Save edits
   const handleSave = async () => {
     if (!editingCustomer) return;
 
     const { error } = await supabase
       .from("customers")
       .update(formData)
-      .eq("id", editingCustomer.id);
+      .eq("id", editingCustomer.id)
+      .select();
 
     if (error) console.error(error);
     else {
-      // Update customer in state immediately
       setCustomers(
         customers.map((c) =>
           c.id === editingCustomer.id ? { ...c, ...formData } : c
@@ -97,6 +94,7 @@ export default function ExistingCustomers() {
                 <th className="border px-4 py-2">Name</th>
                 <th className="border px-4 py-2">Phone</th>
                 <th className="border px-4 py-2">Email</th>
+                <th className="border px-4 py-2">Account Balance</th>
                 <th className="border px-4 py-2">Gender</th>
                 <th className="border px-4 py-2">Marital Status</th>
                 <th className="border px-4 py-2">Next of Kin</th>
@@ -112,15 +110,16 @@ export default function ExistingCustomers() {
                   <td className="border px-4 py-2">{customer.name}</td>
                   <td className="border px-4 py-2">{customer.phone}</td>
                   <td className="border px-4 py-2">{customer.email}</td>
+                  <td className="border px-4 py-2">₦{customer.balance.toFixed(2)}</td>
                   <td className="border px-4 py-2">{customer.gender}</td>
                   <td className="border px-4 py-2">{customer.marital_status}</td>
                   <td className="border px-4 py-2">{customer.next_of_kin}</td>
                   <td className="border px-4 py-2">{customer.address}</td>
                   <td className="border px-4 py-2">{customer.occupation}</td>
                   <td className="border px-4 py-2">{customer.account_number}</td>
-                  <td className="border px-4 py-2 flex gap-2">
+                  <td className="border px-4 py-2 flex flex-col gap-2">
                     <button
-                      className="bg-yellow-400 px-2 py-1 rounded"
+                      className="bg-green-400 px-2 py-1 rounded"
                       onClick={() => handleEdit(customer)}
                     >
                       Edit

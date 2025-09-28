@@ -37,15 +37,15 @@ export default function Login() {
 
   return (
   
-    <div className="h-screen flex items-center flex-col justify-center bg-gray-100">
+    <div className="h-screen flex items-center flex-col justify-center dark:bg-gray-900 bg-gray-100">
       <form
         onSubmit={handleLogin}
-        className="bg-white p-6 rounded-xl shadow-lg w-96 space-y-4"
+        className="bg-white p-6 rounded-xl shadow-lg w-70 md:w-96 space-y-4"
       >
         <h2 className="text-2xl font-bold text-center text-green-500">Admin Login</h2>
 
         <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)}
-          className="w-full border rounded-md px-3 py-2"
+          className="w-full dark:border-black dark:border-2 dark:placeholder:text-black border dark:text-black rounded-md px-3 py-2"
         />
 
         <input
@@ -53,7 +53,7 @@ export default function Login() {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full border rounded-md px-3 py-2"
+          className="w-full dark:border-black dark:border-2 dark:placeholder:text-black border dark:text-black rounded-md px-3 py-2"
         />
 
         {error && <p className="text-red-500 text-sm">{error}</p>}

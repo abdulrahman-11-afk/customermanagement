@@ -53,10 +53,11 @@ const Page = () => {
       address: formData.get("address") as string,
       occupation: formData.get("occupation") as string,
       account_number: accountNumber,
+      balance: 0.00,
     };
 
     // Validation
-    let validationErrors: { [key: string]: string } = {};
+    const validationErrors: { [key: string]: string } = {};
     for (let key in customer) {
       if (!customer[key as keyof typeof customer]) {
         validationErrors[key] = "This field is required";
@@ -92,7 +93,7 @@ const Page = () => {
     <div className="flex flex-col min-h-screen relative">
       <div className={showPopup ? "blur-md pointer-events-none" : ""}>
         <div className="flex">
-          <aside className="w-64 bg-gray-100 flex h-[100vh] flex-col pt-22 p-4">
+          <aside className="w-64 bg-gray-100 flex flex-col h-[100vh] pt-22 p-4">
             <nav className="flex flex-col gap-7">
               <Link href="/dashboard" className="ml-5">Dashboard</Link>
               <Link href="/newcustomer" className="bg-green-400 w-40 flex items-center justify-center rounded-md h-10">New Customer</Link>
