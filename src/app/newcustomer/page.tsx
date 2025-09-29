@@ -58,7 +58,7 @@ const Page = () => {
 
     // Validation
     const validationErrors: { [key: string]: string } = {};
-    for (let key in customer) {
+    for (const key in customer) {
       if (!customer[key as keyof typeof customer]) {
         validationErrors[key] = "This field is required";
       }

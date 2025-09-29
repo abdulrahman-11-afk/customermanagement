@@ -26,10 +26,10 @@ export default function Dashboard() {
             <h2 className="text-3xl cursor-pointer text-green-400 font-bold my-2"> MIDDLECROWN MULTIVENTURES</h2>
           </div>
           <div className="flex items-center justify-center gap-x-30 my-7">
-            <Link href="/Credit"><div className="w-40 bg-green-400 cursor-pointer transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-xl">
+            <Link href="/Credit"><div className="w-40 bg-green-400 cursor-pointer transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-lg">
               <p>Credit/Deposit</p>
             </div></Link>
-            <div className="w-40 bg-green-400 transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-xl">
+            <div className="w-40 bg-green-400 transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-lg">
               <p>Debit/Withdrawal</p>
             </div>
           </div>

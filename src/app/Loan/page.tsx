@@ -25,16 +25,30 @@ export default function Dashboard() {
           <div className="flex items-center justify-center">
             <h2 className="text-3xl cursor-pointer text-green-400 font-bold my-2"> MIDDLECROWN MULTIVENTURES</h2>
           </div>
-         <div>
-            <div className="flex items-center justify-center gap-x-30 h-100">
-            <div className="w-50 bg-green-400 cursor-pointer transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-40 rounded-lg flex items-center justify-center text-xl">
+          <div>
+           <div className="flex items-center justify-center gap-x-30 my-7">
+            <Link href="/Credit"><div className="w-40 bg-green-400 cursor-pointer transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-lg">
               <p>New Loan</p>
-            </div>
-            <div className="w-50 bg-green-400 transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-40 rounded-lg flex items-center justify-center text-xl">
+            </div></Link>
+            <div className="w-40 bg-green-400 transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-lg">
               <p>Payment</p>
             </div>
           </div>
-         </div>
+          <table className="min-w-full border border-gray-100">
+            <thead className="bg-green-400">
+              <tr>
+                <th className="border px-4 py-2">Name</th>
+                <th className="border px-4 py-2">Transfer Type</th>
+                <th className="border px-4 py-2">Deposits</th>
+                <th className="border px-4 py-2">Withdrawal</th>
+                <th className="border px-4 py-2">Account Balance</th>
+                <th className="border px-4 py-2">Account Number</th>
+                <th className="border px-4 py-2">Other details</th>
+                <th className="border px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+          </table>
+          </div>
         </main>
 
       </div>
