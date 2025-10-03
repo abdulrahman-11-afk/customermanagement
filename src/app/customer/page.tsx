@@ -14,34 +14,36 @@ interface Customer {
   address: string;
   occupation: string;
   account_number: string;
-   balance: number;
+  balance: number;
 }
 
 export default function ExistingCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<Partial<Customer>>({});
+  const [search, setSearch] = useState("");
 
   // Fetch customers
   const fetchCustomers = async () => {
     const { data, error } = await supabase.from("customers").select("*");
     if (error) console.error(error);
-    else setCustomers(data);
+    else setCustomers(data || []);
   };
 
   useEffect(() => {
     fetchCustomers();
+    // load saved search
+    const savedSearch = localStorage.getItem("customerSearch") || "";
+    setSearch(savedSearch);
   }, []);
 
   const handleDelete = async (id: number) => {
     const confirmed = confirm("Are you sure you want to delete this customer?");
     if (!confirmed) return;
 
-    const { error } = await supabase.from("customers").delete().eq("id", id).select();
+    const { error } = await supabase.from("customers").delete().eq("id", id);
     if (error) console.error(error);
-    else {
-      setCustomers(customers.filter((c) => c.id !== id));
-    }
+    else setCustomers(customers.filter((c) => c.id !== id));
   };
 
   const handleEdit = (customer: Customer) => {
@@ -55,8 +57,7 @@ export default function ExistingCustomers() {
     const { error } = await supabase
       .from("customers")
       .update(formData)
-      .eq("id", editingCustomer.id)
-      .select();
+      .eq("id", editingCustomer.id);
 
     if (error) console.error(error);
     else {
@@ -68,6 +69,12 @@ export default function ExistingCustomers() {
       setEditingCustomer(null);
     }
   };
+
+  // filter customers by name or account number
+  const filteredCustomers = customers.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.account_number.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -86,7 +93,20 @@ export default function ExistingCustomers() {
         </aside>
 
         <main className="flex-1 p-6">
-          <h2 className="text-3xl text-green-400 font-bold mb-6">Existing Customers</h2>
+          <div className="flex items-center justify-between my-6">
+            <h2 className="text-3xl text-green-400 font-bold mb-4">Existing Customers</h2>
+
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                localStorage.setItem("customerSearch", e.target.value);
+              }}
+              placeholder="Search customer"
+              className="border-2 border-green-400 rounded-md px-3 mr-5 py-2 mb-4 w-60 placeholder:text-green-400 focus:outline-none"
+            />
+          </div>
 
           <table className="min-w-full border border-gray-300">
             <thead className="bg-green-200">
@@ -105,7 +125,7 @@ export default function ExistingCustomers() {
               </tr>
             </thead>
             <tbody>
-              {customers.map((customer) => (
+              {filteredCustomers.map((customer) => (
                 <tr key={customer.id} className="hover:bg-gray-100">
                   <td className="border px-4 py-2">{customer.name}</td>
                   <td className="border px-4 py-2">{customer.phone}</td>
@@ -141,7 +161,6 @@ export default function ExistingCustomers() {
             <div className="fixed inset-0 bg-gray-50 bg-opacity-30 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg p-6 w-96">
                 <h3 className="text-xl font-bold mb-4">Edit Customer</h3>
-
                 {Object.keys(formData).map((key) => (
                   key !== "id" && (
                     <div key={key} className="mb-2">
@@ -157,7 +176,6 @@ export default function ExistingCustomers() {
                     </div>
                   )
                 ))}
-
                 <div className="flex justify-end gap-2 mt-4">
                   <button
                     className="bg-green-500 text-white px-4 py-2 rounded"
@@ -175,7 +193,6 @@ export default function ExistingCustomers() {
               </div>
             </div>
           )}
-
         </main>
       </div>
     </div>
