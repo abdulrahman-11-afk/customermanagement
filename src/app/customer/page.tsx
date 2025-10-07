@@ -109,7 +109,7 @@ export default function ExistingCustomers() {
           </div>
 
           <table className="min-w-full  border border-gray-300">
-            <thead className="bg-green-200">
+            <thead className="bg-green-500 text-white">
               <tr>
                 <th className="border px-4 py-2">Name</th>
                 <th className="border px-4 py-2">Phone</th>
