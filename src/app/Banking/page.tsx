@@ -29,9 +29,10 @@ export default function Dashboard() {
             <Link href="/Credit"><div className="w-40 bg-green-400 cursor-pointer transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-lg">
               <p>Credit/Deposit</p>
             </div></Link>
-            <div className="w-40 bg-green-400 transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-lg">
+            <Link href="/Debit"><div className="w-40 bg-green-400 transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-lg">
               <p>Debit/Withdrawal</p>
             </div>
+            </Link>
           </div>
           <table className="min-w-full border border-gray-100">
             <thead className="bg-green-400 text-white">

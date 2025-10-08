@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function Credit() {
+export default function Withdrawal() {
   const [accountNumber, setAccountNumber] = useState("");
   const [customer, setCustomer] = useState<any>(null);
   const [amount, setAmount] = useState("");
@@ -56,17 +56,24 @@ export default function Credit() {
     }
   };
 
-  // 💰 Handle deposit
-  const handleDeposit = async (event: React.FormEvent) => {
+  // 💸 Handle Withdrawal
+  const handleWithdrawal = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!customer) return setMessage("Search for a valid customer first!");
-    if (!amount) return setMessage("Enter deposit amount");
+    if (!amount) return setMessage("Enter withdrawal amount");
 
     try {
       setLoading(true);
-      const depositValue = parseFloat(amount);
+      const withdrawValue = parseFloat(amount);
       const currentBalance = Number(customer.balance) || 0;
-      const newBalance = currentBalance + depositValue;
+
+      if (withdrawValue > currentBalance) {
+        setMessage("❌ Insufficient balance!");
+        setLoading(false);
+        return;
+      }
+
+      const newBalance = currentBalance - withdrawValue;
 
       const { error } = await supabase
         .from("customers")
@@ -76,12 +83,12 @@ export default function Credit() {
       if (error) throw error;
 
       setCustomer({ ...customer, balance: newBalance });
-      setMessage(`✅ ₦${amount} added successfully!`);
+      setMessage(`✅ ₦${amount} withdrawn successfully!`);
       setAmount("");
       setOtherDetails("");
     } catch (err) {
       console.error(err);
-      setMessage("❌ Error adding deposit");
+      setMessage("❌ Error processing withdrawal");
     } finally {
       setLoading(false);
     }
@@ -114,10 +121,10 @@ export default function Credit() {
 
           <div className="h-[80vh] flex items-center justify-center">
             <form
-              onSubmit={handleDeposit}
+              onSubmit={handleWithdrawal}
               className="flex items-center w-[50%] shadow-lg p-8 flex-col gap-5 rounded-xl"
             >
-              <p className="text-xl text-green-400">Add Deposit</p>
+              <p className="text-xl text-green-400">Withdraw Funds</p>
 
               <div className="flex flex-col gap-5 w-full">
                 <input
@@ -159,7 +166,7 @@ export default function Credit() {
                 className="border w-30 h-10 rounded-lg text-white bg-green-500 hover:scale-105 transition hover:bg-white hover:text-green-500 duration-300"
                 disabled={loading}
               >
-                {loading ? "Processing..." : "Submit"}
+                {loading ? "Processing..." : "Withdraw"}
               </button>
 
               {message && (

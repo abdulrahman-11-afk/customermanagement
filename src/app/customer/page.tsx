@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 interface Customer {
   id: number;
@@ -22,6 +23,23 @@ export default function ExistingCustomers() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<Partial<Customer>>({});
   const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const highlightedId = searchParams.get("id");
+
+
+  useEffect(() => {
+    if (!highlightedId || customers.length === 0) return;
+
+    const element = document.getElementById(`customer-${highlightedId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("bg-green-200");
+      setTimeout(() => {
+        element.classList.remove("bg-yellow-100");
+      }, 200); // highlight for 3 seconds
+    }
+  }, [highlightedId, customers]);
+
 
   // Fetch customers
   const fetchCustomers = async () => {
@@ -126,7 +144,7 @@ export default function ExistingCustomers() {
             </thead>
             <tbody>
               {filteredCustomers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-100">
+                <tr id={`customer-${customer.id}`} key={customer.id} className="hover:bg-gray-100">
                   <td className="border px-4 py-2">{customer.name}</td>
                   <td className="border px-4 py-2">{customer.phone}</td>
                   <td className="border px-4 py-2">{customer.email}</td>

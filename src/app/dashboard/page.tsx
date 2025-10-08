@@ -94,20 +94,22 @@ export default function Dashboard() {
               {filtered.length > 0 && (
                 <div className="absolute bg-white border border-gray-300 mt-1 w-full rounded-md shadow-lg max-h-60 overflow-y-auto z-50">
                   {filtered.map((customer) => (
-                    <Link
+                    <div
                       key={customer.id}
-                      href={`/customer/${customer.id}`} 
-                      className="block px-3 py-2 hover:bg-green-100 cursor-pointer"
+                  onClick={() => router.push(`/customer?id=${customer.id}`)}
+                      className="px-3 py-2 hover:bg-green-100 cursor-pointer"
                     >
                       <span className="font-semibold">{customer.name}</span>
                       <br />
                       <span className="text-sm text-gray-600">
-                        {customer.account_number} | {customer.phone} | ₦{customer.balance.toFixed(2)}
+                        {customer.account_number} | {customer.phone} | ₦
+                        {customer.balance.toFixed(2)}
                       </span>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               )}
+
             </div>
           </div>
 
