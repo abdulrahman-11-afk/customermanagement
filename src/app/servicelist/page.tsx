@@ -5,7 +5,6 @@ import Link from "next/link";
 
 export default function Dashboard() {
   const router = useRouter();
-
   return (
     <div className="flex flex-col h-screen">
       <div className="flex ">
@@ -25,11 +24,31 @@ export default function Dashboard() {
           <div className="flex items-center justify-center">
             <h2 className="text-3xl cursor-pointer text-green-400 font-bold my-2"> MIDDLECROWN MULTIVENTURES</h2>
           </div>
-         <div>
-            <p className="text-xl pt-10 text-green-400">Features coming soon ...</p>
-         </div>
-        </main>
+          <div>
+            <p className="text-xl pt-10 text-green-400">Add service list</p>
+          </div>
+          <div className="w-full flex items-center justify-center m-10">
+            <button className="w-35 hover:scale-107 transition rounded-sm hover:text-white h-10 bg-green-400 hover:bg-green-500 ">Add Services</button>
+          </div>
+          <table className="min-w-full mt-10 border border-gray-300">
+            <thead className="bg-green-500 text-white">
+              <tr>
+                <th className="border px-4 py-2">Service Name</th>
+                <th className="border px-4 py-2">Charge</th>
+                <th className="border px-4 py-2">Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input className="border px-4 py-2 w-full focus:outline-none" type="text" /></td>
+                <td><input className="border px-4 py-2 w-full focus:outline-none" type="text" /></td>
+                <td><input className="border px-4 py-2 w-full focus:outline-none" type="text" /></td>
+              </tr>
+            </tbody>
 
+          </table>
+
+        </main>
       </div>
     </div>
 

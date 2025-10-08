@@ -12,7 +12,7 @@ export default function Withdrawal() {
   const [message, setMessage] = useState("");
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // 🧠 Auto-search when user stops typing account number
+  //Auto-search when user stops typing account number
   useEffect(() => {
     if (!accountNumber) {
       setCustomer(null);

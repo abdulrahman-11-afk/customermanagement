@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Dashboard() {
- 
+
 
   return (
     <div className="flex flex-col h-screen">
@@ -25,9 +25,31 @@ export default function Dashboard() {
           <div className="flex items-center justify-center">
             <h2 className="text-3xl cursor-pointer text-green-400 font-bold my-2"> MIDDLECROWN MULTIVENTURES</h2>
           </div>
-         <div>
-            <p className="text-xl pt-10 text-green-400">Features coming soon ...</p>
-         </div>
+          <div>
+            <p className="text-xl pt-10 text-green-400">Reports</p>
+          </div>
+          <div className="flex items-center justify-evenly mt-20">
+            <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
+              <p>Get Banking Summary</p>
+              <p>Get Customer Transaction History</p>
+            </div>
+            <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
+              <p>Get Banking Summary</p>
+              <p>Get Customer Transaction History</p>
+            </div>
+            <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
+              <p>Get Banking Summary</p>
+              <p>Get Customer Transaction History</p>
+            </div>
+            <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
+              <p>Get Banking Summary</p>
+              <p>Get Customer Transaction History</p>
+            </div>
+            <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
+              <p>Get Banking Summary</p>
+              <p>Get Customer Transaction History</p>
+            </div>
+          </div>
         </main>
 
       </div>
