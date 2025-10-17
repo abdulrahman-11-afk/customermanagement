@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabaseClient";
 interface Loan {
   id: number;
   account_number: string;
-  customer_name: string;
+  name: string; // changed from customer_name
   loan_type: string;
   amount: number;
   interest_rate: number;
@@ -21,49 +21,49 @@ export default function Loan() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const fetchLoansWithNames = async () => {
-    try {
-      // Fetch all loans
-      const { data: loansData, error: loansError } = await supabase
-        .from("loans")
-        .select("*")
-        .order("id", { ascending: false });
+    const fetchLoansWithNames = async () => {
+      try {
+        // Fetch all loans
+        const { data: loansData, error: loansError } = await supabase
+          .from("loans")
+          .select("*")
+          .order("id", { ascending: false });
 
-      if (loansError) throw loansError;
+        if (loansError) throw loansError;
 
-      // Fetch all customers (check your customer table column names)
-      const { data: customersData, error: customersError } = await supabase
-        .from("customers")
-        .select("account_number, name"); // or use "customer_name" if that's your column
+        // Fetch all customers (matching by account_number)
+        const { data: customersData, error: customersError } = await supabase
+          .from("customers")
+          .select("account_number, name"); // uses `name` now
 
-      if (customersError) throw customersError;
+        if (customersError) throw customersError;
 
-      // Merge: match account_number between loans and customers
-      const loansWithNames = loansData.map((loan) => {
-        const customer = customersData.find(
-          (c) => c.account_number === loan.account_number
-        );
-        return {
-          ...loan,
-          customer_name: customer ? customer.name : "Unknown",
-        };
-      });
+        // Merge customer names into loan data
+        const loansWithNames = loansData.map((loan) => {
+          const customer = customersData.find(
+            (c) => c.account_number === loan.account_number
+          );
+          return {
+            ...loan,
+            name: customer ? customer.name : "Unknown",
+          };
+        });
 
-      setLoans(loansWithNames);
-    } catch (err) {
-      console.error("Error loading loans:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLoans(loansWithNames);
+      } catch (err) {
+        console.error("Error loading loans:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchLoansWithNames();
-}, []);
-
+    fetchLoansWithNames();
+  }, []);
 
   return (
     <div className="flex flex-col h-screen">
-      <div className="flex ">
+      <div className="flex">
+        {/* Sidebar */}
         <aside className="w-64 bg-gray-100 flex h-[100vh] flex-col pt-22 p-4">
           <nav className="flex flex-col gap-7">
             <Link href="/dashboard" className="ml-5">Dashboard</Link>
@@ -77,7 +77,8 @@ export default function Loan() {
           </nav>
         </aside>
 
-        <main className="flex-1 p-6 ">
+        {/* Main Section */}
+        <main className="flex-1 p-6">
           <div className="flex items-center justify-center">
             <h2 className="text-3xl cursor-pointer text-green-400 font-bold my-2">
               MIDDLECROWN MULTIVENTURES
@@ -92,13 +93,14 @@ export default function Loan() {
                 </div>
               </Link>
 
-              <Link href="/Payment">
+              <Link href="/PaymentLoan">
                 <div className="w-40 bg-green-400 transform hover:scale-105 transition ease duration-300 hover:bg-green-500 text-white h-20 rounded-lg flex items-center justify-center text-lg">
                   <p>Payment</p>
                 </div>
               </Link>
             </div>
 
+            {/* Table */}
             <table className="min-w-full border border-gray-100">
               <thead className="bg-green-400 text-white">
                 <tr>
@@ -130,7 +132,7 @@ export default function Loan() {
                 ) : (
                   loans.map((loan) => (
                     <tr key={loan.id} className="text-center border">
-                     <td className="border px-4 py-2">{loan.customer_name}</td>
+                      <td className="border px-4 py-2">{loan.name}</td>
                       <td className="border px-4 py-2">{loan.loan_type}</td>
                       <td className="border px-4 py-2">₦{Number(loan.amount || 0).toLocaleString()}</td>
                       <td className="border px-4 py-2">{Number(loan.interest_rate || 0)}</td>
