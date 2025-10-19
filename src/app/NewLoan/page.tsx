@@ -168,6 +168,7 @@ export default function NewLoan() {
                 <input
                   type="text"
                   value={accountNumber}
+                  aria-label="newloan-account-number"
                   onChange={(e) => setAccountNumber(e.target.value)}
                   className="border rounded-sm w-full h-10 pl-3"
                   placeholder="Enter Account Number"
@@ -196,6 +197,7 @@ export default function NewLoan() {
                   <input
                     type="number"
                     value={loanAmount}
+                    aria-label="newloan-amount"
                     onChange={(e) => setLoanAmount(e.target.value)}
                     className="border rounded-sm h-10 pl-3"
                     placeholder="Enter Loan Amount"
@@ -231,6 +233,7 @@ export default function NewLoan() {
 
               <button
                 type="submit"
+                aria-label="newloan-submit"
                 disabled={loading}
                 className="border w-30 h-10 rounded-lg text-white bg-green-500 hover:scale-105 transition hover:bg-white hover:text-green-500 duration-300"
               >

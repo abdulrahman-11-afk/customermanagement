@@ -10,17 +10,25 @@ export default function Dashboard() {
   
   useEffect(() => {
     const fetchCustomers = async () => {
-      const { data, error } = await supabase
-        .from("customers")
-        .select("name, balance, account_number, other_details");
+      try {
+        // request only known-existing columns to avoid DB errors when schema differs
+        const { data, error } = await supabase
+          .from("customers")
+          .select("name, balance, account_number");
 
-      if (error) {
-        console.error("Error fetching customers:", error);
-      } else {
-        setCustomers(data);
+        if (error) {
+          // Log a safe string representation of the error to avoid circular JSON issues
+          console.error("Error fetching customers:", error?.message ?? String(error));
+          setCustomers([]);
+        } else {
+          setCustomers(data || []);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching customers:", (err as Error).message ?? String(err));
+        setCustomers([]);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchCustomers();
@@ -114,7 +122,7 @@ export default function Dashboard() {
                       ₦{Number(cust.balance).toLocaleString()}
                     </td>
                     <td className="border px-4 py-2">{cust.account_number}</td>
-                    <td className="border px-4 py-2">{cust.other_details || "—"}</td>
+                    <td className="border px-4 py-2">{(cust as any).other_details ?? "—"}</td>
                   </tr>
                 ))
               ) : (

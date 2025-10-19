@@ -13,6 +13,7 @@ type Service = {
 export default function ServiceList() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newService, setNewService] = useState({ name: "", charge: "", percentage: "" });
   const [editingService, setEditingService] = useState<Service | null>(null);
 
@@ -34,7 +35,7 @@ export default function ServiceList() {
 
   const handleAddService = async () => {
     if (!newService.name.trim()) return alert("Enter service name");
-
+    setIsSubmitting(true);
     const charge = Number(newService.charge) || 0;
     const percentage = Number(newService.percentage) || 0;
 
@@ -53,12 +54,15 @@ export default function ServiceList() {
     } catch (err) {
       console.error("Supabase error:", err);
       alert("Error saving service");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
 
   const handleSaveEdit = async () => {
     if (!editingService) return;
+    setIsSubmitting(true);
 
     const updated = {
       name: newService.name.trim(),
@@ -84,6 +88,8 @@ export default function ServiceList() {
     } catch (err) {
       console.error("Update error:", err);
       alert("Error updating service");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -144,6 +150,7 @@ export default function ServiceList() {
               placeholder="Service Name"
               className="border p-2 rounded w-48"
               value={newService.name}
+              aria-label="service-name"
               onChange={(e) => setNewService({ ...newService, name: e.target.value })}
             />
             <input
@@ -151,6 +158,7 @@ export default function ServiceList() {
               placeholder="Charge (₦)"
               className="border p-2 rounded w-32"
               value={newService.charge}
+              aria-label="service-charge"
               onChange={(e) => setNewService({ ...newService, charge: e.target.value })}
             />
             <input
@@ -158,16 +166,17 @@ export default function ServiceList() {
               placeholder="Percentage (%)"
               className="border p-2 text-sm rounded w-32"
               value={newService.percentage}
+              aria-label="service-percentage"
               onChange={(e) => setNewService({ ...newService, percentage: e.target.value })}
             />
 
             {editingService ? (
               <>
-                <button onClick={handleSaveEdit} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Save</button>
-                <button onClick={handleCancelEdit} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel</button>
+                <button onClick={handleSaveEdit} disabled={isSubmitting} className="bg-green-500 disabled:opacity-60 text-white px-4 py-2 rounded hover:bg-green-600">Save</button>
+                <button onClick={handleCancelEdit} disabled={isSubmitting} className="bg-gray-400 disabled:opacity-60 text-white px-4 py-2 rounded hover:bg-gray-500">Cancel</button>
               </>
             ) : (
-              <button onClick={handleAddService} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Add Service</button>
+              <button onClick={handleAddService} disabled={isSubmitting} className="bg-green-500 disabled:opacity-60 text-white px-4 py-2 rounded hover:bg-green-600">Add Service</button>
             )}
           </div>
 

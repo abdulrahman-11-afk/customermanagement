@@ -34,20 +34,20 @@ export default function Dashboard() {
               <p>Get Customer Transaction History</p>
             </div>
             <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
-              <p>Get Banking Summary</p>
-              <p>Get Customer Transaction History</p>
+              <p>Get Loan Summary</p>
+              <p>Get Customer Loan History</p>
             </div>
             <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
-              <p>Get Banking Summary</p>
-              <p>Get Customer Transaction History</p>
+              <p>Income Report</p>
+              <p>Get Monthly Income Summary</p>
             </div>
             <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
-              <p>Get Banking Summary</p>
-              <p>Get Customer Transaction History</p>
+              <p>Expense Report</p>
+              <p>Get Monthly Expense Summary</p>
             </div>
             <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
-              <p>Get Banking Summary</p>
-              <p>Get Customer Transaction History</p>
+              <p>Profit and loss statement</p>
+              <p>Get Monthly Income, Expense, Cost Summary</p>
             </div>
           </div>
         </main>

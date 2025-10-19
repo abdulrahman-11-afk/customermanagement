@@ -124,6 +124,7 @@ export default function NewRepayment() {
               <div className="flex flex-col gap-5 w-full">
                 <input
                   type="text"
+                  aria-label="paymentloan-account-number"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
                   className="border rounded-sm w-full h-10 pl-3"
@@ -157,6 +158,7 @@ export default function NewRepayment() {
 
               <button
                 type="submit"
+                aria-label="paymentloan-submit"
                 disabled={loading}
                 className="border w-30 h-10 rounded-lg text-white bg-green-500 hover:scale-105 transition hover:bg-white hover:text-green-500 duration-300"
               >

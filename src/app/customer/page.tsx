@@ -34,9 +34,10 @@ export default function ExistingCustomers() {
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
       element.classList.add("bg-green-200");
+      // highlight for 3 seconds then remove the same class
       setTimeout(() => {
-        element.classList.remove("bg-yellow-100");
-      }, 200); // highlight for 3 seconds
+        element.classList.remove("bg-green-200");
+      }, 3000);
     }
   }, [highlightedId, customers]);
 
@@ -58,10 +59,9 @@ export default function ExistingCustomers() {
   const handleDelete = async (id: number) => {
     const confirmed = confirm("Are you sure you want to delete this customer?");
     if (!confirmed) return;
-
     const { error } = await supabase.from("customers").delete().eq("id", id);
     if (error) console.error(error);
-    else setCustomers(customers.filter((c) => c.id !== id));
+    else setCustomers((prev) => prev.filter((c) => c.id !== id));
   };
 
   const handleEdit = (customer: Customer) => {
@@ -79,10 +79,8 @@ export default function ExistingCustomers() {
 
     if (error) console.error(error);
     else {
-      setCustomers(
-        customers.map((c) =>
-          c.id === editingCustomer.id ? { ...c, ...formData } : c
-        )
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === editingCustomer.id ? { ...c, ...formData } : c))
       );
       setEditingCustomer(null);
     }
@@ -184,6 +182,7 @@ export default function ExistingCustomers() {
                     <div key={key} className="mb-2">
                       <input
                         type="text"
+                        aria-label={`edit-${key}`}
                         value={formData[key as keyof Customer] || ""}
                         onChange={(e) =>
                           setFormData({ ...formData, [key]: e.target.value })

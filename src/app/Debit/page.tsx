@@ -129,6 +129,7 @@ export default function Withdrawal() {
               <div className="flex flex-col gap-5 w-full">
                 <input
                   type="text"
+                  aria-label="debit-account-number"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
                   className="border rounded-sm w-full h-10 pl-3"
@@ -146,6 +147,7 @@ export default function Withdrawal() {
                 <div className="flex gap-3">
                   <input
                     type="number"
+                    aria-label="debit-amount"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     className="border rounded-sm flex-1 h-10 pl-3"
@@ -163,6 +165,7 @@ export default function Withdrawal() {
 
               <button
                 type="submit"
+                aria-label="debit-submit"
                 className="border w-30 h-10 rounded-lg text-white bg-green-500 hover:scale-105 transition hover:bg-white hover:text-green-500 duration-300"
                 disabled={loading}
               >

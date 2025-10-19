@@ -122,6 +122,7 @@ export default function Credit() {
               <div className="flex flex-col gap-5 w-full">
                 <input
                   type="text"
+                  aria-label="credit-account-number"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
                   className="border rounded-sm w-full h-10 pl-3"
@@ -139,6 +140,7 @@ export default function Credit() {
                 <div className="flex gap-3">
                   <input
                     type="number"
+                    aria-label="credit-amount"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     className="border rounded-sm flex-1 h-10 pl-3"
@@ -156,6 +158,7 @@ export default function Credit() {
 
               <button
                 type="submit"
+                aria-label="credit-submit"
                 className="border w-30 h-10 rounded-lg text-white bg-green-500 hover:scale-105 transition hover:bg-white hover:text-green-500 duration-300"
                 disabled={loading}
               >
