@@ -100,18 +100,21 @@ export default function NewLoan() {
 
     try {
       setLoading(true);
-      const { error } = await supabase.from("loans").insert([
-        {
-          account_number: accountNumber,
-          customer_name: customer.name,
-          loan_type: loanType,
-        loan_amount: parseFloat(loanAmount) || 0,
-          interest_rate: interestRate || 0,
-          total_amount: totalAmount || 0,
-          status: "Active",
-          other_details: otherDetails,
-        },
-      ]);
+      // Build payload using current DB column names: `name` and `amount`.
+      const loanPayload: any = {
+        account_number: accountNumber,
+        name: customer.name,
+        loan_type: loanType,
+        amount: parseFloat(loanAmount) || 0,
+        interest_rate: interestRate || 0,
+        total_amount: totalAmount || 0,
+        status: "Active",
+      };
+
+      // only include other_details when provided to avoid sending unknown/null columns
+      if (otherDetails && otherDetails.trim() !== "") loanPayload.other_details = otherDetails;
+
+      const { error } = await supabase.from("loans").insert([loanPayload]);
 
       if (error) throw error;
 

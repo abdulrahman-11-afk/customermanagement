@@ -11,6 +11,8 @@ export default function NewRepayment() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [repayments, setRepayments] = useState<any[]>([]);
+  const [loadingRepayments, setLoadingRepayments] = useState(false);
 
   // Auto-fetch customer by account number
   useEffect(() => {
@@ -53,6 +55,33 @@ export default function NewRepayment() {
     }
   };
 
+  // Fetch repayments to display
+  const fetchRepayments = async () => {
+    try {
+      setLoadingRepayments(true);
+      const { data, error } = await supabase
+        .from("repayments")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading repayments:", error.message ?? error);
+        setRepayments([]);
+      } else {
+        setRepayments(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching repayments:", err);
+      setRepayments([]);
+    } finally {
+      setLoadingRepayments(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRepayments();
+  }, []);
+
   // Submit repayment
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,22 +90,25 @@ export default function NewRepayment() {
 
     try {
       setLoading(true);
-      const { error } = await supabase.from("repayments").insert([
-        {
-          account_number: accountNumber,
-          customer_name: customer.name,
-          amount: parseFloat(amount) || 0,
-          other_details: otherDetails,
-        },
-      ]);
+      const repaymentPayload: any = {
+        account_number: accountNumber,
+        name: customer.name,
+        amount: parseFloat(amount) || 0,
+      };
+
+      if (otherDetails && otherDetails.trim() !== "") repaymentPayload.other_details = otherDetails;
+
+      const { error } = await supabase.from("repayments").insert([repaymentPayload]);
 
       if (error) throw error;
 
-      setMessage("✅ Repayment added successfully!");
-      setAccountNumber("");
-      setCustomer(null);
-      setAmount("");
-      setOtherDetails("");
+  setMessage("✅ Repayment added successfully!");
+  setAccountNumber("");
+  setCustomer(null);
+  setAmount("");
+  setOtherDetails("");
+  // refresh displayed repayments
+  fetchRepayments();
     } catch (err) {
       console.error(err);
       setMessage("❌ Error adding repayment");

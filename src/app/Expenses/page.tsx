@@ -203,13 +203,8 @@ export default function ServiceList() {
               ) : (
                 services.map((service) => (
                   <tr key={service.id} className="text-center border">
-                    <td className="border px-4 py-2">{service.name}</td>
-                    <td className="border px-4 py-2">{service.charge}</td>
-                    <td className="border px-4 py-2">{service.percentage}%</td>
-                    <td className="px-4 py-2 flex justify-center gap-2">
-                      <button onClick={() => handleEdit(service)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Edit</button>
-                      <button onClick={() => handleDelete(service.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete</button>
-                    </td>
+                   
+                   
                   </tr>
                 ))
               )}
