@@ -10,6 +10,8 @@ export default function Withdrawal() {
   const [otherDetails, setOtherDetails] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [txColumns, setTxColumns] = useState<string[] | null>(null);
+  const [lastInsertError, setLastInsertError] = useState<any>(null);
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
 
   //Auto-search when user stops typing account number
@@ -75,12 +77,47 @@ export default function Withdrawal() {
 
       const newBalance = currentBalance - withdrawValue;
 
-      const { error } = await supabase
+      // First update the balance
+      const { error: balanceError } = await supabase
         .from("customers")
         .update({ balance: newBalance })
         .eq("account_number", accountNumber);
 
-      if (error) throw error;
+      if (balanceError) throw balanceError;
+
+      // Then record the transaction using the provided schema
+      try {
+        const { error: txError } = await supabase.from("transactions").insert({
+          customer_id: customer.id,
+          amount: -withdrawValue,
+          type: "debit",
+          description: otherDetails,
+          created_at: new Date().toISOString(),
+        });
+
+        if (txError) {
+          console.error("Transaction insert error:", txError);
+          setLastInsertError(txError);
+
+          // attempt rollback
+          const { error: rollbackError } = await supabase
+            .from("customers")
+            .update({ balance: currentBalance })
+            .eq("account_number", accountNumber);
+
+          if (rollbackError) {
+            console.error("Rollback failed:", rollbackError);
+            setMessage("❌ Transaction failed and rollback failed (see console).");
+            throw txError;
+          }
+
+          setMessage("❌ Transaction failed. Balance rolled back.");
+          throw txError;
+        }
+      } catch (txErr) {
+        setLastInsertError(txErr);
+        throw txErr;
+      }
 
       setCustomer({ ...customer, balance: newBalance });
       setMessage(`✅ ₦${amount} withdrawn successfully!`);
@@ -89,6 +126,7 @@ export default function Withdrawal() {
     } catch (err) {
       console.error(err);
       setMessage("❌ Error processing withdrawal");
+      setLastInsertError(err);
     } finally {
       setLoading(false);
     }
@@ -182,6 +220,21 @@ export default function Withdrawal() {
                 </p>
               )}
             </form>
+          {/* <div className="w-[50%] mt-2">
+            <div className="flex gap-2">
+              <button type="button" onClick={async () => {
+                try {
+                  setLoading(true);
+                  const { data, error } = await supabase.from('transactions').select('*').limit(1);
+                  if (error) { console.error(error); setMessage('❌ Error fetching transactions (see console)'); setTxColumns(null); }
+                  else if (!data || data.length === 0) { setTxColumns([]); setMessage('No transactions found'); }
+                  else setTxColumns(Object.keys(data[0]));
+                } finally { setLoading(false); }
+              }} className="text-xs underline text-blue-600">Inspect transaction columns</button>
+              <button type="button" onClick={() => setLastInsertError(null)} className="text-xs underline text-gray-600">Clear last error</button>
+            </div>
+
+          </div> */}
           </div>
         </main>
       </div>

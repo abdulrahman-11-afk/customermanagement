@@ -10,6 +10,7 @@ export default function Dashboard() {
   
   useEffect(() => {
     const fetchCustomers = async () => {
+      setLoading(true);
       try {
         // request only known-existing columns to avoid DB errors when schema differs
         const { data, error } = await supabase
@@ -17,12 +18,56 @@ export default function Dashboard() {
           .select("name, balance, account_number");
 
         if (error) {
-          // Log a safe string representation of the error to avoid circular JSON issues
           console.error("Error fetching customers:", error?.message ?? String(error));
           setCustomers([]);
-        } else {
-          setCustomers(data || []);
+          return;
         }
+
+        // fetch transactions so we can compute deposits/withdrawals per account
+        let transactions: any[] = [];
+        try {
+          const tx = await supabase.from("transactions").select("*").order("created_at", { ascending: false });  // Note: using created_at as it's the default Supabase timestamp column name
+          if (!tx.error && tx.data) transactions = tx.data;
+        } catch (e) {
+          transactions = [];
+        }
+
+        const depositsMap: Record<string, number> = {};
+        const withdrawalsMap: Record<string, number> = {};
+        const lastTypeMap: Record<string, string> = {};
+
+        transactions.forEach((t: any) => {
+          // accept both snake_case and camelCase column names and fall back on amount sign
+          const acc = t.account_number ?? t.accountNumber ?? "";
+          const amt = Number(t.amount ?? t.value) || 0;
+          const ttRaw = (t.type ?? t.transfer_type ?? t.transferType ?? "").toString();
+          const tt = ttRaw.toLowerCase();
+          if (!acc) return;
+
+          // record last transfer type (transactions already ordered by created_at desc)
+          if (!lastTypeMap[acc]) {
+            lastTypeMap[acc] = tt || (amt > 0 ? "credit" : amt < 0 ? "debit" : "other");
+          }
+
+          if (tt.includes("cred") || (tt === "" && amt > 0)) {
+            depositsMap[acc] = (depositsMap[acc] || 0) + Math.abs(amt);
+          } else if (tt.includes("deb") || tt.includes("wit") || (tt === "" && amt < 0)) {
+            withdrawalsMap[acc] = (withdrawalsMap[acc] || 0) + Math.abs(amt);
+          } else {
+            // fallback by sign
+            if (amt >= 0) depositsMap[acc] = (depositsMap[acc] || 0) + Math.abs(amt);
+            else withdrawalsMap[acc] = (withdrawalsMap[acc] || 0) + Math.abs(amt);
+          }
+        });
+
+        const enriched = (data || []).map((c: any) => ({
+          ...c,
+          deposits: depositsMap[c.account_number] || 0,
+          withdrawals: withdrawalsMap[c.account_number] || 0,
+          last_transfer_type: lastTypeMap[c.account_number] || "—",
+        }));
+
+        setCustomers(enriched);
       } catch (err) {
         console.error("Unexpected error fetching customers:", (err as Error).message ?? String(err));
         setCustomers([]);
@@ -115,14 +160,20 @@ export default function Dashboard() {
                 customers.map((cust, index) => (
                   <tr key={index} className="text-center border-t">
                     <td className="border px-4 py-2">{cust.name}</td>
-                    <td className="border px-4 py-2 text-gray-400">—</td>
-                    <td className="border px-4 py-2 text-gray-400">—</td>
-                    <td className="border px-4 py-2 text-gray-400">—</td>
+                    <td className="border px-4 py-2">{cust.last_transfer_type || "—"}</td>
+                    <td className="border px-4 py-2">
+                      {cust.deposits > 0 ? `₦${cust.deposits.toLocaleString()}` : "—"}
+                    </td>
+                    <td className="border px-4 py-2">
+                      {cust.withdrawals > 0 ? `₦${cust.withdrawals.toLocaleString()}` : "—"}
+                    </td>
                     <td className="border px-4 py-2">
                       ₦{Number(cust.balance).toLocaleString()}
                     </td>
                     <td className="border px-4 py-2">{cust.account_number}</td>
-                    <td className="border px-4 py-2">{(cust as any).other_details ?? "—"}</td>
+                    <td className="border px-4 py-2">
+                      {cust.other_details ?? "—"}
+                    </td>
                   </tr>
                 ))
               ) : (

@@ -1,40 +1,70 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabaseClient";
+import React, { useEffect, useRef, useState } from "react";
+import { supabase } from "../lib/supabaseClient"; // adjust path as needed
+
+interface Customer {
+  id: number;
+  name: string;
+  account_number: string;
+  balance: number | string | null;
+  // add other customer fields if any
+}
+
+interface TransactionRow {
+  id?: number;
+  type: string;
+  amount: number;
+  description?: string | null;
+  created_at?: string;
+  customer_id?: number;
+}
 
 export default function Credit() {
-  const [accountNumber, setAccountNumber] = useState("");
-  const [customer, setCustomer] = useState<any>(null);
-  const [amount, setAmount] = useState("");
-  const [otherDetails, setOtherDetails] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [accountNumber, setAccountNumber] = useState<string>("");
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [amount, setAmount] = useState<string>("");
+  const [otherDetails, setOtherDetails] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
+  const [txColumns, setTxColumns] = useState<string[] | null>(null);
+  const [lastInsertError, setLastInsertError] = useState<any>(null);
 
-  // 🧠 Auto-search when user stops typing account number
+  // useRef for debounce timer (works in browser)
+  const typingTimer = useRef<number | null>(null);
+
+  // Debounced fetch for accountNumber
   useEffect(() => {
     if (!accountNumber) {
       setCustomer(null);
       setMessage("");
+      setLastInsertError(null);
       return;
     }
 
-    if (typingTimeout) clearTimeout(typingTimeout);
+    // clear previous timer
+    if (typingTimer.current) window.clearTimeout(typingTimer.current);
 
-    const timeout = setTimeout(() => {
+    typingTimer.current = window.setTimeout(() => {
       fetchCustomer(accountNumber);
-    }, 1000); // wait 1 second after typing stops
+    }, 1000);
 
-    setTypingTimeout(timeout);
+    // cleanup on unmount or accountNumber change
+    return () => {
+      if (typingTimer.current) {
+        window.clearTimeout(typingTimer.current);
+        typingTimer.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountNumber]);
 
-  // 🔍 Fetch customer details
+  // fetch a customer by account number
   const fetchCustomer = async (accNum: string) => {
     try {
       setLoading(true);
       setMessage("");
-
       const { data, error } = await supabase
         .from("customers")
         .select("*")
@@ -42,46 +72,162 @@ export default function Credit() {
         .single();
 
       if (error || !data) {
-        setMessage("❌ Customer not found");
         setCustomer(null);
+        setMessage("❌ Customer not found");
+        setMessageType("error");
       } else {
         setCustomer(data);
         setMessage("");
       }
     } catch (err) {
-      console.error(err);
-      setMessage("Error fetching customer");
+      console.error("fetchCustomer error:", err);
+      setMessage("❌ Error fetching customer");
+      setMessageType("error");
+      setCustomer(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // 💰 Handle deposit
+  // validate amount
+  const validateAmount = (value: string) => {
+    const n = Number(value);
+    if (!value) return "Enter deposit amount";
+    if (Number.isNaN(n)) return "Enter a valid number";
+    if (n <= 0) return "Amount must be greater than zero";
+    return null;
+  };
+
+  // handle deposit: update customers.balance then insert transaction row
   const handleDeposit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!customer) return setMessage("Search for a valid customer first!");
-    if (!amount) return setMessage("Enter deposit amount");
+    setLastInsertError(null);
+
+    if (!customer) {
+      setMessage("🔎 Search for a valid customer first!");
+      setMessageType("error");
+      return;
+    }
+
+    const validationError = validateAmount(amount);
+    if (validationError) {
+      setMessage(`❌ ${validationError}`);
+      setMessageType("error");
+      return;
+    }
+
+    const depositValue = parseFloat(amount);
+    const currentBalance = Number(customer.balance) || 0;
+    const newBalance = currentBalance + depositValue;
 
     try {
       setLoading(true);
-      const depositValue = parseFloat(amount);
-      const currentBalance = Number(customer.balance) || 0;
-      const newBalance = currentBalance + depositValue;
+      setMessage("Processing...");
+      setMessageType("info");
 
-      const { error } = await supabase
+      // 1) Update customer balance
+      const { error: balanceError } = await supabase
         .from("customers")
         .update({ balance: newBalance })
-        .eq("account_number", accountNumber);
+        .eq("account_number", customer.account_number);
 
-      if (error) throw error;
+      if (balanceError) {
+        console.error("Balance update error:", balanceError);
+        throw balanceError;
+      }
 
+      // 2) Insert transaction row using your schema (customer_id)
+      const txPayload: TransactionRow = {
+        customer_id: customer.id,
+        type: "credit",
+        amount: depositValue,
+        description: otherDetails || null,
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: txError } = await supabase.from("transactions").insert(txPayload);
+
+      if (txError) {
+        // insertion failed — attempt rollback of the balance update
+        console.error("Transaction insert error:", txError);
+        setLastInsertError(txError);
+
+        // Try to rollback customer balance
+        try {
+          const { error: rollbackError } = await supabase
+            .from("customers")
+            .update({ balance: currentBalance })
+            .eq("account_number", customer.account_number);
+
+          if (rollbackError) {
+            console.error("Rollback failed:", rollbackError);
+            setMessage("❌ Transaction failed and rollback failed (see console).");
+            setMessageType("error");
+            throw txError; // surface original tx error up
+          } else {
+            setMessage("❌ Transaction failed. Balance rolled back.");
+            setMessageType("error");
+            throw txError;
+          }
+        } catch (rbErr) {
+          console.error("Rollback exception:", rbErr);
+          setMessage("❌ Transaction failed and rollback exception occurred (see console).");
+          setMessageType("error");
+          throw txError;
+        }
+      }
+
+      // success
       setCustomer({ ...customer, balance: newBalance });
-      setMessage(`✅ ₦${amount} added successfully!`);
       setAmount("");
       setOtherDetails("");
+      setMessage(`✅ ₦${depositValue.toLocaleString()} added successfully!`);
+      setMessageType("success");
+
+      // auto-hide success after 5s
+      window.setTimeout(() => {
+        setMessage("");
+      }, 5000);
     } catch (err) {
-      console.error(err);
-      setMessage("❌ Error adding deposit");
+      console.error("handleDeposit error:", err);
+      if (!message) {
+        setMessage("❌ Error adding deposit (see console).");
+        setMessageType("error");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debug helper: fetch one transaction row to inspect column names
+  const fetchTransactionColumns = async () => {
+    try {
+      setLoading(true);
+      setMessage("");
+      const { data, error } = await supabase.from("transactions").select("*").limit(1);
+
+      if (error) {
+        console.error("Error fetching transactions for schema check:", error);
+        setMessage("❌ Error fetching transactions (see console)");
+        setTxColumns(null);
+        setMessageType("error");
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setTxColumns([]);
+        setMessage("No transactions found to inspect columns");
+        setMessageType("info");
+        return;
+      }
+
+      setTxColumns(Object.keys(data[0]));
+      setMessage("Transaction columns fetched");
+      setMessageType("info");
+    } catch (e) {
+      console.error(e);
+      setMessage("❌ Unexpected error (see console)");
+      setMessageType("error");
     } finally {
       setLoading(false);
     }
@@ -124,7 +270,7 @@ export default function Credit() {
                   type="text"
                   aria-label="credit-account-number"
                   value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
+                  onChange={(e) => setAccountNumber(e.target.value.trim())}
                   className="border rounded-sm w-full h-10 pl-3"
                   placeholder="Enter Account Number"
                 />
@@ -140,6 +286,7 @@ export default function Credit() {
                 <div className="flex gap-3">
                   <input
                     type="number"
+                    step="0.01"
                     aria-label="credit-amount"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
@@ -151,7 +298,7 @@ export default function Credit() {
                     value={otherDetails}
                     onChange={(e) => setOtherDetails(e.target.value)}
                     className="border rounded-sm flex-1 h-10 pl-3"
-                    placeholder="Other Details"
+                    placeholder="Other Details (optional)"
                   />
                 </div>
               </div>
@@ -159,19 +306,25 @@ export default function Credit() {
               <button
                 type="submit"
                 aria-label="credit-submit"
-                className="border w-30 h-10 rounded-lg text-white bg-green-500 hover:scale-105 transition hover:bg-white hover:text-green-500 duration-300"
-                disabled={loading}
+                className={`border w-30 h-10 rounded-lg text-white bg-green-500 hover:scale-105 transition duration-300 ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+                disabled={loading || !customer || !!validateAmount(amount)}
               >
                 {loading ? "Processing..." : "Submit"}
               </button>
 
+              
+
               {message && (
-                <p className="text-center text-sm mt-2 text-green-600">{message}</p>
+                <p className={`text-center text-sm mt-2 ${messageType === "success" ? "text-green-600" : "text-red-600"}`}>
+                  {message}
+                </p>
               )}
+
+            
 
               {customer && (
                 <p className="text-sm text-gray-600">
-                  Current Balance: ₦{Number(customer.balance).toLocaleString()}
+                  Current Balance: ₦{Number(customer.balance || 0).toLocaleString()}
                 </p>
               )}
             </form>

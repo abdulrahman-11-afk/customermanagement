@@ -68,7 +68,6 @@ export default function NewLoan() {
     fetchServices();
   }, []);
 
-  // Calculate interest and total whenever loan amount or interest rate changes
   useEffect(() => {
     const amountNum = parseFloat(loanAmount) || 0;
     const rateNum = Number(interestRate) || 0;
