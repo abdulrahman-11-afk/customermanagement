@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 export default function NewRepayment() {
   const [accountNumber, setAccountNumber] = useState("");
@@ -40,6 +40,10 @@ export default function NewRepayment() {
       setMessage("");
 
       // Get customer
+      const supabase = getSupabase();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
       const { data: custData, error: custError } = await supabase
         .from("customers")
         .select("*")
@@ -75,8 +79,8 @@ export default function NewRepayment() {
       if (repsError) throw repsError;
 
       // Calculate totals
-      const totalPayable = (loansData || []).reduce((sum, loan) => sum + Number(loan.total_amount || loan.amount || 0), 0);
-      const totalRepaid = (repsData || []).reduce((sum, rep) => sum + Number(rep.amount || 0), 0);
+      const totalPayable = (loansData || []).reduce((sum: number, loan: any) => sum + Number(loan.total_amount || loan.amount || 0), 0);
+      const totalRepaid = (repsData || []).reduce((sum: number, rep: any) => sum + Number(rep.amount || 0), 0);
       const owing = Math.max(0, totalPayable - totalRepaid);
 
       setLoans(loansData || []);
@@ -99,8 +103,12 @@ export default function NewRepayment() {
   // Allocate repayments to active loans (FIFO by created_at) and mark fully paid loans as 'Paid'
   const allocateRepaymentsAndMarkPaid = async (accNum: string) => {
     try {
+      const db1 = getSupabase();
+      if (!db1) {
+        throw new Error('Supabase client not initialized');
+      }
       // fetch active loans (oldest first)
-      const { data: loansData, error: loansError } = await supabase
+      const { data: loansData, error: loansError } = await db1
         .from("loans")
         .select("id, total_amount, amount, created_at")
         .eq("account_number", accNum)
@@ -113,7 +121,7 @@ export default function NewRepayment() {
       }
 
       // fetch total repaid for this account
-      const { data: repsData, error: repsError } = await supabase
+      const { data: repsData, error: repsError } = await db1
         .from("repayments")
         .select("amount")
         .eq("account_number", accNum);
@@ -141,7 +149,7 @@ export default function NewRepayment() {
       }
 
       if (paidIds.length > 0) {
-        const { error: updErr } = await supabase
+        const { error: updErr } = await db1
           .from("loans")
           .update({ status: "Paid" })
           .in("id", paidIds);
@@ -168,6 +176,10 @@ export default function NewRepayment() {
     }
 
     try {
+      const db2 = getSupabase();
+      if (!db2) {
+        throw new Error('Supabase client not initialized');
+      }
       setLoading(true);
       const repaymentPayload: any = {
         account_number: accountNumber,
@@ -177,7 +189,7 @@ export default function NewRepayment() {
 
       if (otherDetails && otherDetails.trim() !== "") repaymentPayload.other_details = otherDetails;
 
-      const { error } = await supabase.from("repayments").insert([repaymentPayload]);
+      const { error } = await db2.from("repayments").insert([repaymentPayload]);
 
       if (error) throw error;
 

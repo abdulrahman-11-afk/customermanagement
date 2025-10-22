@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 export default function NewLoan() {
   const [accountNumber, setAccountNumber] = useState("");
@@ -37,6 +37,9 @@ export default function NewLoan() {
   const fetchCustomer = async (accNum: string) => {
     try {
       setLoading(true);
+      const supabase = getSupabase();
+      if (!supabase) throw new Error("Supabase client not available");
+
       const { data, error } = await supabase
         .from("customers")
         .select("*")
@@ -61,6 +64,12 @@ export default function NewLoan() {
   // Fetch all loan types (services)
   useEffect(() => {
     const fetchServices = async () => {
+      const supabase = getSupabase();
+      if (!supabase) {
+        console.error("Supabase client not available");
+        return;
+      }
+
       const { data, error } = await supabase.from("services").select("*");
       if (error) console.error("Error loading services:", error);
       else setServices(data || []);
@@ -113,9 +122,12 @@ export default function NewLoan() {
       // only include other_details when provided to avoid sending unknown/null columns
       if (otherDetails && otherDetails.trim() !== "") loanPayload.other_details = otherDetails;
 
-      const { error } = await supabase.from("loans").insert([loanPayload]);
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase client not available");
 
-      if (error) throw error;
+  const { error } = await supabase.from("loans").insert([loanPayload]);
+
+  if (error) throw error;
 
       setMessage("✅ Loan added successfully!");
       setAccountNumber("");

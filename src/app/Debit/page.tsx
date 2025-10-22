@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 export default function Withdrawal() {
   const [accountNumber, setAccountNumber] = useState("");
@@ -37,6 +37,10 @@ export default function Withdrawal() {
       setLoading(true);
       setMessage("");
 
+      const supabase = getSupabase();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
       const { data, error } = await supabase
         .from("customers")
         .select("*")
@@ -77,6 +81,10 @@ export default function Withdrawal() {
 
       const newBalance = currentBalance - withdrawValue;
 
+      const supabase = getSupabase();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
       // First update the balance
       const { error: balanceError } = await supabase
         .from("customers")

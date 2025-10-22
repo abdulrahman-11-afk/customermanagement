@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 interface Customer {
   id: number;
@@ -27,6 +27,12 @@ export default function Dashboard() {
 
   // fetch all customers
   const fetchCustomers = async () => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      console.error("Supabase client not available");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("customers")
       .select("id, name, phone, account_number, balance");

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 type Service = {
   id: number;
@@ -20,6 +20,10 @@ export default function ServiceList() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
+        const supabase = getSupabase();
+        if (!supabase) {
+          throw new Error('Supabase client not initialized');
+        }
         const { data, error } = await supabase.from("services").select("*").order("id", { ascending: true });
         if (error) throw error;
         setServices((data || []) as Service[]);
@@ -45,6 +49,10 @@ export default function ServiceList() {
     const newItem = { name: newService.name.trim(), charge, percentage };
 
     try {
+      const supabase = getSupabase();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
       const { data, error } = await supabase.from("services").insert([newItem]).select();
       if (error) throw error;
       if (data && data.length > 0) {
@@ -75,6 +83,10 @@ export default function ServiceList() {
     if (updated.percentage < 0 || updated.percentage > 100) return alert("Percentage must be between 0 and 100");
 
     try {
+      const supabase = getSupabase();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
       const { data, error } = await supabase.from("services").update(updated).eq("id", editingService.id).select();
       if (error) throw error;
       if (data && data.length > 0) {
@@ -106,6 +118,10 @@ export default function ServiceList() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this service?")) return;
     try {
+      const supabase = getSupabase();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
       const { data, error } = await supabase.from("services").delete().eq("id", id).select();
       if (error) throw error;
       setServices((prev) => prev.filter((s) => s.id !== id));

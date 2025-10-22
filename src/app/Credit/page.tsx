@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { supabase } from "../lib/supabaseClient"; // adjust path as needed
+import { getSupabase } from "../lib/supabaseClient";
 
 interface Customer {
   id: number;
@@ -65,6 +65,10 @@ export default function Credit() {
     try {
       setLoading(true);
       setMessage("");
+      const supabase = getSupabase();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
       const { data, error } = await supabase
         .from("customers")
         .select("*")
@@ -126,6 +130,10 @@ export default function Credit() {
       setMessageType("info");
 
       // 1) Update customer balance
+      const supabase = getSupabase();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
       const { error: balanceError } = await supabase
         .from("customers")
         .update({ balance: newBalance })
@@ -204,6 +212,10 @@ export default function Credit() {
     try {
       setLoading(true);
       setMessage("");
+      const supabase = getSupabase();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
       const { data, error } = await supabase.from("transactions").select("*").limit(1);
 
       if (error) {

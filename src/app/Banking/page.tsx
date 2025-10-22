@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
-export default function Dashboard() {
+export default function BankingDashboard() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -12,6 +13,10 @@ export default function Dashboard() {
     const fetchCustomers = async () => {
       setLoading(true);
       try {
+        const supabase = getSupabase();
+        if (!supabase) {
+          throw new Error('Supabase client not initialized');
+        }
         // request only known-existing columns to avoid DB errors when schema differs
         const { data, error } = await supabase
           .from("customers")
@@ -26,8 +31,8 @@ export default function Dashboard() {
         // fetch transactions so we can compute deposits/withdrawals per account
         let transactions: any[] = [];
         try {
-          const tx = await supabase.from("transactions").select("*").order("created_at", { ascending: false });  // Note: using created_at as it's the default Supabase timestamp column name
-          if (!tx.error && tx.data) transactions = tx.data;
+                                                  const tx = await supabase.from("transactions").select("*").order("created_at", { ascending: false }).eq("type", "debit").like("description", "%Registration%");  // Note: using created_at as it's the default Supabase timestamp column name
+          if (tx && !tx.error && tx.data) transactions = tx.data;
         } catch (e) {
           transactions = [];
         }

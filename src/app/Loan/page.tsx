@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 type Repayment = {
   id?: number;
@@ -35,6 +35,8 @@ export default function Loan() {
     const load = async () => {
       try {
         setLoading(true);
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase client not available");
 
         const { data: loansData, error: loansError } = await supabase.from("loans").select("*").order("id", { ascending: false });
         if (loansError) throw loansError;

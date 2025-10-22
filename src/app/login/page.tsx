@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 
 export default function Login() {
@@ -13,12 +13,19 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const supabase = getSupabase();
+    if (!supabase) {
+      setError("Authentication unavailable");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("admin")
       .select("*")
       .eq("username", username)
       .eq("password", password)
       .single();
+
     if (error || !data) {
       setError("Invalid username or password");
 

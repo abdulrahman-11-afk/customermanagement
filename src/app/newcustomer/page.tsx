@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabaseClient";
+import { getSupabase } from "../lib/supabaseClient";
 
 const Page = () => {
   const [phone, setPhone] = useState("");
@@ -19,6 +19,12 @@ const Page = () => {
 
   const generateAccountNumber = async () => {
     try {
+      const supabase = getSupabase();
+      if (!supabase) {
+        setAccountNumber("202501");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("customers")
         .select("account_number")
@@ -87,6 +93,12 @@ const Page = () => {
 
     console.log("Validation passed ✅ Checking duplicates...");
 
+    const supabase = getSupabase();
+    if (!supabase) {
+      alert("Supabase not available");
+      return;
+    }
+
     // Check duplicates
     const { data: existing, error: fetchError } = await supabase
       .from("customers")
@@ -112,7 +124,7 @@ const Page = () => {
 
     console.log("No duplicates ✅ Inserting into Supabase...");
 
-    // ✅ Insert into Supabase
+    // ✅ Insert into Supabase (we already obtained `supabase` above)
     const { data, error } = await supabase.from("customers").insert([customer]).select();
 
     if (error) {
