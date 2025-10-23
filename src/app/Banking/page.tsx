@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabase } from "../lib/supabaseClient";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -7,6 +7,9 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 export default function BankingDashboard() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [transactionsByAccount, setTransactionsByAccount] = useState<Record<string, any[]>>({});
+  const [txLoading, setTxLoading] = useState<Record<string, boolean>>({});
 
   
   useEffect(() => {
@@ -20,7 +23,7 @@ export default function BankingDashboard() {
         // request only known-existing columns to avoid DB errors when schema differs
         const { data, error } = await supabase
           .from("customers")
-          .select("name, balance, account_number");
+          .select("id, name, balance, account_number");
 
         if (error) {
           console.error("Error fetching customers:", error?.message ?? String(error));
@@ -42,14 +45,11 @@ export default function BankingDashboard() {
         const lastTypeMap: Record<string, string> = {};
 
         transactions.forEach((t: any) => {
-          // accept both snake_case and camelCase column names and fall back on amount sign
           const acc = t.account_number ?? t.accountNumber ?? "";
           const amt = Number(t.amount ?? t.value) || 0;
           const ttRaw = (t.type ?? t.transfer_type ?? t.transferType ?? "").toString();
           const tt = ttRaw.toLowerCase();
           if (!acc) return;
-
-          // record last transfer type (transactions already ordered by created_at desc)
           if (!lastTypeMap[acc]) {
             lastTypeMap[acc] = tt || (amt > 0 ? "credit" : amt < 0 ? "debit" : "other");
           }
@@ -146,12 +146,8 @@ export default function BankingDashboard() {
             <thead className="bg-green-400 text-white">
               <tr>
                 <th className="border px-4 py-2">Name</th>
-                <th className="border px-4 py-2">Transfer Type</th>
-                <th className="border px-4 py-2">Deposits</th>
-                <th className="border px-4 py-2">Withdrawal</th>
                 <th className="border px-4 py-2">Account Balance</th>
                 <th className="border px-4 py-2">Account Number</th>
-                <th className="border px-4 py-2">Other Details</th>
               </tr>
             </thead>
             <tbody>
@@ -162,25 +158,91 @@ export default function BankingDashboard() {
                   </td>
                 </tr>
               ) : customers.length > 0 ? (
-                customers.map((cust, index) => (
-                  <tr key={index} className="text-center border-t">
-                    <td className="border px-4 py-2">{cust.name}</td>
-                    <td className="border px-4 py-2">{cust.last_transfer_type || "—"}</td>
-                    <td className="border px-4 py-2">
-                      {cust.deposits > 0 ? `₦${cust.deposits.toLocaleString()}` : "—"}
-                    </td>
-                    <td className="border px-4 py-2">
-                      {cust.withdrawals > 0 ? `₦${cust.withdrawals.toLocaleString()}` : "—"}
-                    </td>
-                    <td className="border px-4 py-2">
-                      ₦{Number(cust.balance).toLocaleString()}
-                    </td>
-                    <td className="border px-4 py-2">{cust.account_number}</td>
-                    <td className="border px-4 py-2">
-                      {cust.other_details ?? "—"}
-                    </td>
-                  </tr>
-                ))
+                customers.map((cust, index) => {
+                  const id = String(cust.id ?? index);
+                  const isExpanded = !!expanded[id];
+                  const txs = transactionsByAccount[id] || [];
+                  return (
+                    <React.Fragment key={id}>
+                      <tr className="text-center border-t cursor-pointer hover:bg-gray-50" onClick={async () => {
+                          // Toggle expand/collapse
+                          setExpanded((s) => ({ ...s, [id]: !s[id] }));
+                          // If expanding and not cached, fetch transactions by customer_id
+                          if (!expanded[id] && !(transactionsByAccount[id] && transactionsByAccount[id].length)) {
+                            setTxLoading((s) => ({ ...s, [id]: true }));
+                            try {
+                              const supabase = getSupabase();
+                              if (!supabase) throw new Error("Supabase client not initialized");
+                              const { data: txData, error: txError } = await supabase
+                                .from("transactions")
+                                .select("*")
+                                .eq("customer_id", cust.id)
+                                .order("created_at", { ascending: false });
+                              if (txError) {
+                                console.error("Error fetching transactions:", txError);
+                                setTransactionsByAccount((s) => ({ ...s, [id]: [] }));
+                              } else {
+                                setTransactionsByAccount((s) => ({ ...s, [id]: txData || [] }));
+                              }
+                            } catch (err) {
+                              console.error("Error fetching transactions:", err);
+                              setTransactionsByAccount((s) => ({ ...s, [id]: [] }));
+                            } finally {
+                              setTxLoading((s) => ({ ...s, [id]: false }));
+                            }
+                          }
+                        }}
+                      >
+                        <td className="border px-4 py-2 text-left pl-8 flex items-center gap-3">
+                          <button className="text-sm text-gray-600 w-6 h-6 flex items-center justify-center rounded-full bg-white border">
+                            {isExpanded ? "-" : "+"}
+                          </button>
+                          <span>{cust.name}</span>
+                        </td>
+                        <td className="border px-4 py-2">₦{Number(cust.balance).toLocaleString()}</td>
+                        <td className="border px-4 py-2">{cust.account_number}</td>
+                      </tr>
+
+                      {isExpanded && (
+                        <tr key={(id || index) + "-txs"} className="bg-gray-50">
+                          <td colSpan={3} className="p-4">
+                            <div className="mb-3 flex items-center justify-between">
+                              <div className="text-sm text-gray-700">Transaction history for <strong>{cust.name}</strong></div>
+                              <div className="text-sm text-gray-500">{txLoading[id] ? "Loading..." : `${txs.length} record(s)`}</div>
+                            </div>
+
+                            {txLoading[id] ? (
+                              <div className="text-center py-4">Loading transactions...</div>
+                            ) : txs.length === 0 ? (
+                              <div className="text-center text-sm text-gray-500 py-4">No transactions found for this account.</div>
+                            ) : (
+                              <table className="min-w-full border">
+                                <thead className="bg-white text-left">
+                                  <tr>
+                                    <th className="px-3 py-2">Date</th>
+                                    <th className="px-3 py-2">Type</th>
+                                    <th className="px-3 py-2">Amount (₦)</th>
+                                    <th className="px-3 py-2">Description</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {txs.map((t: any, i: number) => (
+                                    <tr key={i} className="border-t">
+                                      <td className="px-3 py-2 text-sm">{t.created_at ? new Date(t.created_at).toLocaleString() : "—"}</td>
+                                      <td className="px-3 py-2 text-sm">{(t.type ?? t.transfer_type ?? t.transferType ?? (Number(t.amount) >= 0 ? "credit" : "debit")).toString()}</td>
+                                      <td className="px-3 py-2 text-sm">₦{Number(t.amount ?? t.value ?? 0).toLocaleString()}</td>
+                                      <td className="px-3 py-2 text-sm">{t.description ?? t.note ?? "—"}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={7} className="text-center py-4 text-gray-500">
