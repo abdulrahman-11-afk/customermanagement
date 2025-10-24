@@ -113,6 +113,16 @@ export default function BankingSummary() {
           {/* Totals Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="bg-green-100 p-4 rounded-lg shadow">
+              <p className="text-sm text-gray-600">Total Deposited (Month)</p>
+              <h3 className="text-xl text-green-600 font-bold">{formatAmount(totals.monthDeposit)}</h3>
+            </div>
+
+            <div className="bg-red-100 p-4 rounded-lg shadow">
+              <p className="text-sm text-gray-600">Total Withdrawn (Month)</p>
+              <h3 className="text-xl text-red-600 font-bold">{formatAmount(totals.monthWithdraw)}</h3>
+            </div>
+
+            <div className="bg-green-100 p-4 rounded-lg shadow">
               <p className="text-sm text-gray-600">Total Deposited (Year)</p>
               <h3 className="text-xl text-green-600 font-bold">{formatAmount(totals.yearDeposit)}</h3>
             </div>
@@ -122,15 +132,6 @@ export default function BankingSummary() {
               <h3 className="text-xl text-red-600 font-bold">{formatAmount(totals.yearWithdraw)}</h3>
             </div>
 
-            <div className="bg-green-100 p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-600">Total Deposited (Month)</p>
-              <h3 className="text-xl text-green-600 font-bold">{formatAmount(totals.monthDeposit)}</h3>
-            </div>
-
-            <div className="bg-red-100 p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-600">Total Withdrawn (Month)</p>
-              <h3 className="text-xl text-red-600 font-bold">{formatAmount(totals.monthWithdraw)}</h3>
-            </div>
           </div>
 
           {/* Transaction History */}
@@ -161,17 +162,15 @@ export default function BankingSummary() {
                         {new Date(tx.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </td>
                       <td
-                        className={`p-2 border font-semibold ${
-                          tx.type === "credit" ? "text-green-600" : "text-red-600"
-                        }`}
+                        className={`p-2 border font-semibold ${tx.type === "credit" ? "text-green-600" : "text-red-600"
+                          }`}
                       >
                         {tx.type === "credit" ? "Credit" : "Debit"}
                       </td>
                       <td className="p-2 border">{tx.description || "-"}</td>
                       <td
-                        className={`p-2 border text-right ${
-                          tx.type === "credit" ? "text-green-600" : "text-red-600"
-                        }`}
+                        className={`p-2 border text-right ${tx.type === "credit" ? "text-green-600" : "text-red-600"
+                          }`}
                       >
                         {formatAmount(Math.abs(Number(tx.amount)))}
                       </td>

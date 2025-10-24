@@ -29,23 +29,25 @@ export default function Dashboard() {
             <p className="text-xl pt-10 text-green-400">Reports</p>
           </div>
           <div className="flex items-center justify-evenly mt-20">
-        <Link href="/bankingSummary">    <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
+            <Link href="/bankingSummary">    <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
               <p>Get Banking Summary</p>
               <p>Get Customer Transaction History</p>
             </div></Link>
-           <Link href="/LoanSummary">
-            <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
-              <p>Get Loan Summary</p>
-              <p>Get Customer Loan History</p>
-            </div></Link>
+            <Link href="/LoanSummary">
+              <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
+                <p>Get Loan Summary</p>
+                <p>Get Customer Loan History</p>
+              </div></Link>
             <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
               <p>Income Report</p>
               <p>Get Monthly Income Summary</p>
             </div>
-            <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
-              <p>Expense Report</p>
-              <p>Get Monthly Expense Summary</p>
-            </div>
+            <Link href="/ExpenseSummary">
+              <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
+                <p>Expense Report</p>
+                <p>Get Monthly Expense Summary</p>
+              </div>
+            </Link>
             <div className="w-50 text-center hover:scale-107 transition ease-in duration-200 hover:bg-green-400 flex flex-col justify-between h-40 rounded-lg p-3 bg-green-300">
               <p>Profit and loss statement</p>
               <p>Get Monthly Income, Expense, Cost Summary</p>
