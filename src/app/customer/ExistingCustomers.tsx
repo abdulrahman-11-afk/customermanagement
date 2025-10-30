@@ -12,6 +12,7 @@ interface Customer {
   gender: string;
   marital_status: string;
   next_of_kin: string;
+  next_of_kin_number: string; // ✅ added
   address: string;
   occupation: string;
   account_number: string;
@@ -65,6 +66,8 @@ export default function ExistingCustomers() {
     setFormData({ ...customer });
   };
 
+  const [isBankingOpen, setIsBankingOpen] = useState(false);
+
   const handleSave = async () => {
     if (!editingCustomer) return;
     const supabase = getSupabase();
@@ -100,8 +103,23 @@ export default function ExistingCustomers() {
               Existing Customers
             </Link>
             <Link href="/servicelist" className="ml-5">Service List</Link>
-            <Link href="/Banking" className="ml-5">Banking</Link>
-            <Link href="/Loan" className="ml-5">Loan</Link>
+            {/* Banking Dropdown */}
+            <div className="ml-5">
+              <button
+                onClick={() => setIsBankingOpen(!isBankingOpen)}
+                className="w-full text-left"
+              >
+                Banking {isBankingOpen ? "▲" : "▼"}
+              </button>
+
+              {isBankingOpen && (
+                <div className="flex flex-col mt-4 ml-3 gap-5">
+                  <Link href="/Banking" className="ml-2">Savings</Link>
+                  <Link href="/Loan" className="ml-2">Loan Facility</Link>
+                </div>
+              )}
+            </div>
+
             <Link href="/Expenses" className="ml-5">Expenses</Link>
             <Link href="/reports" className="ml-5">Reports</Link>
           </nav>
@@ -122,7 +140,6 @@ export default function ExistingCustomers() {
               className="border-2 border-green-400 rounded-md px-3 mr-5 py-2 mb-4 w-60 placeholder:text-green-400 focus:outline-none"
             />
           </div>
-
           <table className="min-w-full border border-gray-300">
             <thead className="bg-green-500 text-white">
               <tr>
@@ -133,12 +150,14 @@ export default function ExistingCustomers() {
                 <th className="border px-4 py-2">Gender</th>
                 <th className="border px-4 py-2">Marital Status</th>
                 <th className="border px-4 py-2">Next of Kin</th>
+                <th className="border px-4 py-2">Next of Kin Number</th>
                 <th className="border px-4 py-2">Address</th>
                 <th className="border px-4 py-2">Occupation</th>
                 <th className="border px-4 py-2">Account Number</th>
                 <th className="border px-4 py-2">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {filteredCustomers.map((customer) => (
                 <tr
@@ -153,6 +172,7 @@ export default function ExistingCustomers() {
                   <td className="border px-4 py-2">{customer.gender}</td>
                   <td className="border px-4 py-2">{customer.marital_status}</td>
                   <td className="border px-4 py-2">{customer.next_of_kin}</td>
+                  <td className="border px-4 py-2">{customer.next_of_kin_number}</td>
                   <td className="border px-4 py-2">{customer.address}</td>
                   <td className="border px-4 py-2">{customer.occupation}</td>
                   <td className="border px-4 py-2">{customer.account_number}</td>

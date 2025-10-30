@@ -11,7 +11,6 @@ const Page = () => {
   const [showPopup, setShowPopup] = useState(false);
   const router = useRouter();
 
-  // Generate account number on load
   useEffect(() => {
     generateAccountNumber();
     document.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
@@ -50,10 +49,8 @@ const Page = () => {
     }
   };
 
-  // ✅ Handle Submit
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Submitting form...");
     setErrors({});
 
     const formData = new FormData(e.target as HTMLFormElement);
@@ -64,34 +61,33 @@ const Page = () => {
       gender: formData.get("gender") as string,
       marital_status: formData.get("marital_status") as string,
       next_of_kin: formData.get("next_of_kin") as string,
+      next_of_kin_number: formData.get("next_of_kin_number") as string, // ✅ FIXED FIELD NAME
       address: formData.get("address") as string,
       occupation: formData.get("occupation") as string,
       account_number: accountNumber,
       balance: 0.0,
     };
 
-    console.log("Form data:", customer);
-
     // Validation
     const validationErrors: { [key: string]: string } = {};
-   for (const key in customer) {
-  // 👇 Skip checking 'balance' because 0 is a valid value
-  if (key !== "balance" && !customer[key as keyof typeof customer]) {
-    validationErrors[key] = "This field is required";
-  }
-}
+    for (const key in customer) {
+      if (key !== "balance" && !customer[key as keyof typeof customer]) {
+        validationErrors[key] = "This field is required";
+      }
+    }
 
     if (phone && phone.length !== 11) {
       validationErrors.phone = "Phone number must be 11 digits";
     }
 
+    if (customer.next_of_kin_number && customer.next_of_kin_number.length !== 11) {
+      validationErrors.next_of_kin_number = "Next of kin number must be 11 digits";
+    }
+
     if (Object.keys(validationErrors).length > 0) {
-      console.log("Validation failed:", validationErrors);
       setErrors(validationErrors);
       return;
     }
-
-    console.log("Validation passed ✅ Checking duplicates...");
 
     const supabase = getSupabase();
     if (!supabase) {
@@ -105,8 +101,6 @@ const Page = () => {
       .select("email, phone")
       .or(`email.eq.${customer.email},phone.eq.${customer.phone}`);
 
-    console.log("Duplicate check result:", { existing, fetchError });
-
     if (fetchError) {
       console.error("Error checking duplicates:", fetchError);
     } else if (existing && existing.length > 0) {
@@ -117,22 +111,21 @@ const Page = () => {
       if (existing.some((c) => c.phone === customer.phone)) {
         duplicateErrors.phone = "Phone number already exists";
       }
-      console.log("Duplicate found:", duplicateErrors);
       setErrors(duplicateErrors);
       return;
     }
 
-    console.log("No duplicates ✅ Inserting into Supabase...");
-
-    // ✅ Insert into Supabase (we already obtained `supabase` above)
-    const { data, error } = await supabase.from("customers").insert([customer]).select();
+    // ✅ Insert into Supabase
+    const { data, error } = await supabase
+      .from("customers")
+      .insert([customer])
+      .select();
 
     if (error) {
       console.error("Insert error:", error);
       alert("Error saving customer: " + error.message);
       setErrors({ submit: "Failed to save customer. Please try again." });
     } else {
-      console.log("Insert success ✅", data);
       setShowPopup(true);
     }
   };
@@ -217,6 +210,18 @@ const Page = () => {
                     {errors.next_of_kin && <p className="text-red-500 text-sm">{errors.next_of_kin}</p>}
                   </div>
 
+                  {/* ✅ FIXED FIELD NAME */}
+                  <div>
+                    <input
+                      name="next_of_kin_number"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Next of Kin Number"
+                      className="w-full border rounded-md px-3 py-2"
+                    />
+                    {errors.next_of_kin_number && <p className="text-red-500 text-sm">{errors.next_of_kin_number}</p>}
+                  </div>
+
                   <div>
                     <input name="address" type="text" placeholder="Address" className="w-full border rounded-md px-3 py-2" />
                     {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
@@ -241,10 +246,10 @@ const Page = () => {
                 {errors.submit && <p className="text-red-500 text-center">{errors.submit}</p>}
 
                 <div className="flex flex-col md:flex-row gap-3 justify-end">
-                  <button type="submit" className="bg-green-500 hover:bg-green-600 transition text-white px-6 py-2 rounded-md">
+                  <button type="submit" className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-md">
                     Submit
                   </button>
-                  <button type="button" onClick={handleReset} className="bg-red-500 hover:bg-red-600 transition text-white px-6 py-2 rounded-md">
+                  <button type="button" onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md">
                     Cancel
                   </button>
                 </div>
