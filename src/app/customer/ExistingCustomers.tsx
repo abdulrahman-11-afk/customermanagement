@@ -41,16 +41,24 @@ export default function ExistingCustomers() {
 
   const fetchCustomers = async () => {
     const supabase = getSupabase();
+    if (!supabase) {
+      console.error("Supabase client not initialized. Check your .env.local setup.");
+      return;
+    }
     const { data, error } = await supabase.from("customers").select("*");
     if (error) console.error(error);
     else setCustomers(data || []);
   };
 
-  useEffect(() => {
-    fetchCustomers();
+
+ useEffect(() => {
+  try {
     const savedSearch = localStorage.getItem("customerSearch") || "";
     setSearch(savedSearch);
-  }, []);
+  } catch {
+    setSearch("");
+  }
+}, []);
 
   const handleDelete = async (id: number) => {
     const confirmed = confirm("Are you sure you want to delete this customer?");
@@ -76,6 +84,8 @@ export default function ExistingCustomers() {
       .update(formData)
       .eq("id", editingCustomer.id);
     if (error) console.error(error);
+      if (!editingCustomer) return;
+  if (Object.keys(formData).length === 0) return alert("No changes made");
     else {
       setCustomers((prev) =>
         prev.map((c) =>
@@ -85,12 +95,12 @@ export default function ExistingCustomers() {
       setEditingCustomer(null);
     }
   };
+  
 
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.account_number.toLowerCase().includes(search.toLowerCase())
-  );
+ const filteredCustomers = customers.filter((c) =>
+  (c.name?.toLowerCase() ?? "").includes(search.toLowerCase()) ||
+  (c.account_number?.toLowerCase() ?? "").includes(search.toLowerCase())
+);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -168,7 +178,7 @@ export default function ExistingCustomers() {
                   <td className="border px-4 py-2">{customer.name}</td>
                   <td className="border px-4 py-2">{customer.phone}</td>
                   <td className="border px-4 py-2">{customer.email}</td>
-                  <td className="border px-4 py-2">₦{customer.balance.toFixed(2)}</td>
+                  <td className="border px-4 py-2">₦{(customer.balance ?? 0).toFixed(2)}</td>
                   <td className="border px-4 py-2">{customer.gender}</td>
                   <td className="border px-4 py-2">{customer.marital_status}</td>
                   <td className="border px-4 py-2">{customer.next_of_kin}</td>

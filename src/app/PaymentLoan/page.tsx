@@ -15,6 +15,7 @@ export default function NewRepayment() {
   const [repayments, setRepayments] = useState<any[]>([]);
   const [amountOwing, setAmountOwing] = useState(0);
 
+  // Debounced fetch when typing account number
   useEffect(() => {
     if (!accountNumber) {
       setCustomer(null);
@@ -23,21 +24,23 @@ export default function NewRepayment() {
     }
 
     if (typingTimeout) clearTimeout(typingTimeout);
-    const timeout = setTimeout(() => fetchCustomerAndLoans(accountNumber), 1000);
+    const timeout = setTimeout(() => fetchCustomerAndLoans(accountNumber), 800);
     setTypingTimeout(timeout);
   }, [accountNumber]);
 
-  // Fetch customer, loans, and repayment schedule
+  // 🧩 Fixed fetching function
   const fetchCustomerAndLoans = async (accNum: string) => {
     try {
       setLoading(true);
       const supabase = getSupabase();
 
-      // Fetch customer
+      console.log("Fetching loans, customers, and repayments...");
+
+      // ✅ Fix 1: Ensure account_number is treated as a string
       const { data: custData, error: custError } = await supabase
         .from("customers")
         .select("*")
-        .eq("account_number", accNum)
+        .eq("account_number", accNum.toString())
         .single();
 
       if (custError || !custData) {
@@ -51,24 +54,28 @@ export default function NewRepayment() {
 
       setCustomer(custData);
 
-      // Fetch active loans
       const { data: loansData, error: loanError } = await supabase
         .from("loans")
         .select("*")
-        .eq("account_number", accNum)
+        .eq("account_number", accNum.toString())
         .eq("status", "Active");
 
       if (loanError) throw loanError;
+
       setLoans(loansData || []);
 
-      // Fetch repayment schedule for these loans
-      const loanIds = (loansData || []).map((l: any) => l.id);
+      const loanIds = (loansData || []).map((l: any) => Number(l.id)).filter(Boolean);
+
       if (loanIds.length === 0) {
+        console.warn("No active loans for this customer");
         setRepayments([]);
         setAmountOwing(0);
         return;
       }
 
+      console.log("Loan IDs for repayment fetch:", loanIds);
+
+      // ✅ Fix 2: Ensure loan_id is an integer and array is valid
       const { data: repayData, error: repayError } = await supabase
         .from("repayments")
         .select("*")
@@ -79,34 +86,35 @@ export default function NewRepayment() {
 
       setRepayments(repayData || []);
 
-      const totalOwing = repayData
-        ?.filter((r) => r.status !== "Paid")
-        .reduce((sum, r) => sum + (Number(r.total_payment) || 0), 0);
+      // ✅ Calculate total owing
+      const totalOwing =
+        repayData
+          ?.filter((r) => r.status !== "Paid")
+          .reduce((sum, r) => sum + (Number(r.total_payment) || 0), 0) || 0;
 
-      setAmountOwing(totalOwing || 0);
+      setAmountOwing(totalOwing);
       setMessage("");
     } catch (err) {
-      console.error(err);
-      setMessage("❌ Error fetching customer/loan data");
+      console.error("Fetch error:", err);
+      setMessage("❌ Error fetching customer or loan data");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle repayment logic (apply to next unpaid schedule)
+  // 🧾 Record repayment
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customer) return setMessage("Search for a valid customer first!");
-    if (!amount) return setMessage("Enter repayment amount!");
-    if (loans.length === 0) return setMessage("No active loans found!");
+    if (!customer) return setMessage("⚠️ Search for a valid customer first!");
+    if (!amount) return setMessage("⚠️ Enter repayment amount!");
+    if (loans.length === 0) return setMessage("⚠️ No active loans found!");
 
     try {
       setLoading(true);
       const supabase = getSupabase();
-      let repaymentAmount = parseFloat(amount);
+      let repaymentAmount = parseFloat(amount.replace(/,/g, ""));
       const updatedSchedules = [];
 
-      // Get all unpaid schedules, sorted by due_date
       const unpaidSchedules = repayments.filter((r) => r.status !== "Paid");
 
       for (let schedule of unpaidSchedules) {
@@ -126,7 +134,7 @@ export default function NewRepayment() {
         repaymentAmount -= payNow;
       }
 
-      // Update all affected repayment schedules
+      // Update repayment schedules
       for (const s of updatedSchedules) {
         await supabase
           .from("repayments")
@@ -137,11 +145,11 @@ export default function NewRepayment() {
           .eq("id", s.id);
       }
 
-      // Check for fully paid loans
+      // Check if loans are fully paid
       const { data: checkLoans } = await supabase
         .from("loans")
         .select("id")
-        .eq("account_number", accountNumber)
+        .eq("account_number", accountNumber.toString())
         .eq("status", "Active");
 
       for (const loan of checkLoans || []) {
@@ -166,7 +174,21 @@ export default function NewRepayment() {
     }
   };
 
-  const formatCurrency = (n: number) => `₦${n.toLocaleString()}`;
+  // ₦ Currency format
+  const formatCurrency = (n: number | string) => {
+    const num = typeof n === "string" ? parseFloat(n.replace(/,/g, "")) : n;
+    if (isNaN(num)) return "";
+    return `₦${num.toLocaleString()}`;
+  };
+
+  // Auto add commas while typing
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/,/g, "");
+    if (!isNaN(Number(raw))) {
+      const formatted = Number(raw).toLocaleString();
+      setAmount(formatted);
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen">
@@ -185,33 +207,46 @@ export default function NewRepayment() {
         </aside>
 
         <main className="flex-1 p-6">
-          <h2 className="text-3xl text-green-400 font-bold text-center mb-8">MIDDLECROWN MULTIVENTURES</h2>
+          <h2 className="text-3xl text-green-400 font-bold text-center mb-8">
+            MIDDLECROWN MULTIVENTURES
+          </h2>
 
           <div className="max-w-2xl mx-auto shadow-lg p-8 rounded-xl bg-white">
             <h3 className="text-xl text-green-500 mb-4">Loan Repayment</h3>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <input
-                type="text"
-                placeholder="Enter Account Number"
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                className="border rounded-md p-2"
-              />
-              <input
-                type="text"
-                readOnly
-                value={customer ? customer.name : ""}
-                className="border rounded-md p-2 bg-gray-100"
-                placeholder="Customer Name"
-              />
-              <input
-                type="number"
-                placeholder="Enter Amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="border rounded-md p-2"
-              />
+              <label>
+                Account Number:
+                <input
+                  type="text"
+                  placeholder="Enter Customer Account Number"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  className="border rounded-md p-2 w-full mt-1"
+                />
+              </label>
+
+              <label>
+                Customer Name:
+                <input
+                  type="text"
+                  readOnly
+                  value={customer ? customer.name : ""}
+                  className="border rounded-md p-2 bg-gray-100 w-full mt-1"
+                  placeholder="Customer Name"
+                />
+              </label>
+
+              <label>
+                Amount to Pay:
+                <input
+                  type="text"
+                  placeholder="Enter Amount (₦)"
+                  value={amount}
+                  onChange={handleAmountChange}
+                  className="border rounded-md p-2 w-full mt-1"
+                />
+              </label>
 
               <button
                 disabled={loading}
@@ -223,7 +258,11 @@ export default function NewRepayment() {
             </form>
 
             {message && (
-              <p className={`text-center mt-4 ${message.includes("❌") ? "text-red-600" : "text-green-600"}`}>
+              <p
+                className={`text-center mt-4 ${
+                  message.includes("❌") ? "text-red-600" : "text-green-600"
+                }`}
+              >
                 {message}
               </p>
             )}
@@ -233,12 +272,19 @@ export default function NewRepayment() {
                 <h4 className="font-semibold mb-2">Repayment Schedule</h4>
                 <div className="text-sm border rounded-md">
                   {repayments.map((r, i) => (
-                    <div key={i} className="grid grid-cols-5 gap-2 border-b p-2 text-center">
-                      <div>#{r.installment_number}</div>
-                      <div>{r.due_date}</div>
-                      <div>{formatCurrency(r.total_payment)}</div>
-                      <div>{formatCurrency(r.amount_paid || 0)}</div>
-                      <div className={`${r.status === "Paid" ? "text-green-600" : "text-gray-500"}`}>
+                    <div
+                      key={i}
+                      className="grid grid-cols-5 gap-2 border-b p-2 text-center"
+                    >
+                      <div>Installment #{r.installment_number}</div>
+                      <div>Due: {r.due_date}</div>
+                      <div>Total: {formatCurrency(r.total_payment)}</div>
+                      <div>Paid: {formatCurrency(r.amount_paid || 0)}</div>
+                      <div
+                        className={`${
+                          r.status === "Paid" ? "text-green-600" : "text-gray-500"
+                        }`}
+                      >
                         {r.status}
                       </div>
                     </div>

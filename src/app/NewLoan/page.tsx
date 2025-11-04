@@ -22,15 +22,15 @@ export default function NewLoan() {
   const [effectiveDate, setEffectiveDate] = useState("");
   const [maturityDate, setMaturityDate] = useState("");
 
-  // Auto-fetch customer
+  // fetch customer after typing stops
   useEffect(() => {
     if (!accountNumber) {
       setCustomer(null);
       setMessage("");
       return;
     }
-    if (typingTimeout) clearTimeout(typingTimeout);
 
+    if (typingTimeout) clearTimeout(typingTimeout);
     const timeout = setTimeout(() => fetchCustomer(accountNumber), 1000);
     setTypingTimeout(timeout);
   }, [accountNumber]);
@@ -47,20 +47,20 @@ export default function NewLoan() {
 
       if (error || !data) {
         setCustomer(null);
-        setMessage("Customer not found");
+        setMessage("❌ Customer not found");
       } else {
         setCustomer(data);
         setMessage("");
       }
     } catch (err) {
       console.error(err);
-      setMessage("Error fetching customer");
+      setMessage("⚠️ Error fetching customer");
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch all loan types (services)
+  // Load services (loan types)
   useEffect(() => {
     const fetchServices = async () => {
       const supabase = getSupabase();
@@ -71,37 +71,32 @@ export default function NewLoan() {
     fetchServices();
   }, []);
 
-  // Calculate interest and total using reducing balance
+  // Recalculate interest
   useEffect(() => {
-    const amountNum = parseFloat(loanAmount) || 0;
-    const rateNum = Number(interestRate) || 0;
-
-    // Assume repayment every month, interest calculated monthly on reducing balance
-    const months = duration / 30; // e.g., 90 days = 3 months
-    let totalInterest = 0;
-    let balance = amountNum;
-
-    for (let i = 0; i < months; i++) {
-      const monthlyInterest = (balance * rateNum) / 100 / 12;
-      totalInterest += monthlyInterest;
-      const monthlyPayment = amountNum / months;
-      balance -= monthlyPayment;
-    }
-
+    const amount = Number(loanAmount.replace(/,/g, "")) || 0;
+    const rate = Number(interestRate) || 0;
+    const months = duration / 30;
+    const totalInterest = (amount * rate * months) / (100 * 12);
     setInterestAmount(totalInterest);
-    setTotalAmount(amountNum + totalInterest);
+    setTotalAmount(amount + totalInterest);
   }, [loanAmount, interestRate, duration]);
 
-  // Handle loan type selection
   const handleLoanTypeChange = (e: any) => {
     const selected = e.target.value;
     setLoanType(selected);
     const service = services.find((s) => s.name === selected);
-    if (service) setInterestRate(Number(service.percentage) || 0);
-    else setInterestRate(0);
+    setInterestRate(service ? Number(service.percentage) || 0 : 0);
   };
 
-  // Auto-calculate maturity date when duration or effective date changes
+  // Format input with commas as user types
+  const handleAmountChange = (e: any) => {
+    const raw = e.target.value.replace(/,/g, "");
+    if (!/^\d*$/.test(raw)) return; // allow only numbers
+    const formatted = Number(raw).toLocaleString("en-US");
+    setLoanAmount(formatted);
+  };
+
+  // Calculate maturity date
   useEffect(() => {
     if (effectiveDate) {
       const start = new Date(effectiveDate);
@@ -113,39 +108,42 @@ export default function NewLoan() {
     }
   }, [effectiveDate, duration]);
 
-  // Submit new loan
+  // Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customer) return setMessage("Search for a valid customer first!");
-    if (!loanType) return setMessage("Select a loan type!");
-    if (!loanAmount) return setMessage("Enter loan amount!");
-    if (!effectiveDate) return setMessage("Select an effective date!");
+
+    if (!customer) return setMessage("❌ Invalid customer account number");
+    if (!loanType) return setMessage("❌ Please select a loan type");
+    if (!loanAmount) return setMessage("❌ Enter loan amount");
+    if (!effectiveDate) return setMessage("❌ Choose an effective date");
 
     try {
       setLoading(true);
-      const loanPayload: any = {
+      const amountNum = Number(loanAmount.replace(/,/g, "")) || 0;
+
+      const loanPayload = {
         account_number: accountNumber,
         name: customer.name,
         loan_type: loanType,
-        amount: parseFloat(loanAmount),
-        interest_rate: interestRate,
-        total_amount: totalAmount,
-        interest_amount: interestAmount,
+        amount: amountNum,
+        interest_rate: Number(interestRate),
+        total_amount: Number(totalAmount),
         duration,
         repayment_method: repaymentMethod,
         effective_date: effectiveDate,
         maturity_date: maturityDate,
         status: "Active",
+        other_details: otherDetails.trim() || null,
       };
-
-      if (otherDetails.trim() !== "") loanPayload.other_details = otherDetails;
 
       const supabase = getSupabase();
       const { error } = await supabase.from("loans").insert([loanPayload]);
-      if (error) throw error;
+      if (error) {
+        console.error(error);
+        return setMessage(`❌ Error adding loan: ${error.message}`);
+      }
 
       setMessage("✅ Loan added successfully!");
-      // Reset form
       setAccountNumber("");
       setCustomer(null);
       setLoanType("");
@@ -158,7 +156,7 @@ export default function NewLoan() {
       setMaturityDate("");
     } catch (err) {
       console.error(err);
-      setMessage("❌ Error adding loan");
+      setMessage("⚠️ Unexpected error adding loan");
     } finally {
       setLoading(false);
     }
@@ -168,7 +166,7 @@ export default function NewLoan() {
     <div className="flex flex-col h-screen">
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 bg-gray-100 flex h-[100vh] flex-col pt-22 p-4">
+        <aside className="w-64 bg-gray-100 flex flex-col pt-22 p-4">
           <nav className="flex flex-col gap-7">
             <Link href="/dashboard" className="ml-5">Dashboard</Link>
             <Link href="/newcustomer" className="ml-5">New Customer</Link>
@@ -188,110 +186,137 @@ export default function NewLoan() {
               MIDDLECROWN MULTIVENTURES
             </h2>
           </div>
+
           <p className="text-xl pt-10 text-green-400">Add New Loan</p>
 
-          <div className="h-[80vh] flex items-center justify-center">
+          <div className="flex items-center justify-center">
             <form
               onSubmit={handleSubmit}
-              className="flex items-center w-[50%] shadow-lg p-8 flex-col gap-5 rounded-xl"
+              className="flex flex-col w-[50%] shadow-lg p-8 gap-5 rounded-xl"
             >
               <p className="text-xl text-green-400">New Loan</p>
 
-              <div className="flex flex-col gap-5 w-full">
-                <input
-                  type="text"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  className="border rounded-sm w-full h-10 pl-3"
-                  placeholder="Enter Account Number"
-                />
+              {/* Account number */}
+              <label className="text-sm font-medium text-gray-700">Account Number</label>
+              <input
+                type="text"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className="border rounded-sm w-full h-10 pl-3"
+                placeholder="Enter customer account number"
+              />
 
-                <input
-                  type="text"
-                  value={customer ? customer.name : ""}
-                  readOnly
-                  className="border rounded-sm w-full h-10 pl-3 bg-gray-100"
-                  placeholder="Customer Name"
-                />
+              {/* Customer name */}
+              <label className="text-sm font-medium text-gray-700">Customer Name</label>
+              <input
+                type="text"
+                value={customer ? customer.name : ""}
+                readOnly
+                className="border rounded-sm w-full h-10 pl-3 bg-gray-100"
+                placeholder="Auto-filled from customer"
+              />
 
-                <select
-                  value={loanType}
-                  onChange={handleLoanTypeChange}
-                  className="border rounded-sm w-full h-10 pl-3"
-                >
-                  <option value="">Select Loan Type</option>
-                  {services.map((s) => (
-                    <option key={s.id} value={s.name}>{s.name}</option>
-                  ))}
-                </select>
+              {/* Loan type */}
+              <label className="text-sm font-medium text-gray-700">Loan Type</label>
+              <select
+                value={loanType}
+                onChange={handleLoanTypeChange}
+                className="border rounded-sm w-full h-10 pl-3"
+              >
+                <option value="">Select loan type</option>
+                {services.map((s) => (
+                  <option key={s.id} value={s.name}>{s.name}</option>
+                ))}
+              </select>
 
-                <input
-                  type="number"
-                  value={loanAmount}
-                  onChange={(e) => setLoanAmount(e.target.value)}
-                  className="border rounded-sm h-10 pl-3"
-                  placeholder="Enter Loan Amount"
-                />
+              {/* Loan amount */}
+              <label className="text-sm font-medium text-gray-700">Loan Amount</label>
+              <input
+                type="text"
+                value={loanAmount}
+                onChange={handleAmountChange}
+                className="border rounded-sm h-10 pl-3"
+                placeholder="Enter loan amount (e.g. 500,000)"
+              />
 
-                <select  className="border rounded-sm w-full h-10 pl-3" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-                  <option>Duration</option>
-                  <option value={30}>30 days</option>
-                  <option value={60}>60 days</option>
-                  <option value={90}>90 days</option>
-                  <option value={120}>120 days</option>
-                </select>
+              {/* Duration */}
+              <label className="text-sm font-medium text-gray-700">Duration</label>
+              <select
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                className="border rounded-sm w-full h-10 pl-3"
+              >
+                <option value={30}>30 days</option>
+                <option value={60}>60 days</option>
+                <option value={90}>90 days</option>
+                <option value={120}>120 days</option>
+              </select>
 
-                <select  className="border rounded-sm w-full h-10 pl-3" value={repaymentMethod} onChange={(e) => setRepaymentMethod(e.target.value)}>
-                  <option>Repayment Method</option>
-                  <option>Weekly</option>
-                  <option>Monthly</option>
-                  <option>Bullet payment</option>
-                </select>
+              {/* Repayment method */}
+              <label className="text-sm font-medium text-gray-700">Repayment Method</label>
+              <select
+                value={repaymentMethod}
+                onChange={(e) => setRepaymentMethod(e.target.value)}
+                className="border rounded-sm w-full h-10 pl-3"
+              >
+                <option>Weekly</option>
+                <option>Monthly</option>
+                <option>Bullet payment</option>
+              </select>
 
-                <input
-                  type="date"
-                  value={effectiveDate}
-                  onChange={(e) => setEffectiveDate(e.target.value)}
-                  className="border rounded-sm h-10 pl-3"
-                  placeholder="Effective Date"
-                />
+              {/* Dates */}
+              <label className="text-sm font-medium text-gray-700">Effective Date</label>
+              <input
+                type="date"
+                value={effectiveDate}
+                onChange={(e) => setEffectiveDate(e.target.value)}
+                className="border rounded-sm h-10 pl-3"
+              />
 
-                <input
-                  type="text"
-                  value={maturityDate ? `Maturity Date: ${maturityDate}` : ""}
-                  readOnly
-                  placeholder="Maturity Date"
-                  className="border rounded-sm h-10 pl-3 bg-gray-100"
-                />
+              <label className="text-sm font-medium text-gray-700">Maturity Date</label>
+              <input
+                type="text"
+                value={maturityDate ? maturityDate : ""}
+                readOnly
+                className="border rounded-sm h-10 pl-3 bg-gray-100"
+              />
 
-                <input
-                  type="text"
-                  value={`Interest Rate: ${interestRate}%`}
-                  readOnly
-                  className="border rounded-sm h-10 pl-3 bg-gray-100"
-                />
-                <input
-                  type="text"
-                  value={`Interest Amount: ₦${interestAmount.toFixed(2)}`}
-                  readOnly
-                  className="border rounded-sm h-10 pl-3 bg-gray-100"
-                />
-                <input
-                  type="text"
-                  value={`Total Amount: ₦${totalAmount.toFixed(2)}`}
-                  readOnly
-                  className="border rounded-sm h-10 pl-3 bg-gray-100"
-                />
+              {/* Calculated fields */}
+              <label className="text-sm font-medium text-gray-700">Interest Rate</label>
+              <input
+                type="text"
+                value={`${interestRate}%`}
+                readOnly
+                className="border rounded-sm h-10 pl-3 bg-gray-100"
+              />
 
-                <input
-                  type="text"
-                  value={otherDetails}
-                  onChange={(e) => setOtherDetails(e.target.value)}
-                  className="border rounded-sm w-full h-10 pl-3"
-                  placeholder="Other Details"
-                />
-              </div>
+              <label className="text-sm font-medium text-gray-700">Interest Amount</label>
+              <input
+                type="text"
+                value={`₦${interestAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+                readOnly
+                className="border rounded-sm h-10 pl-3 bg-gray-100"
+              />
 
+              <label className="text-sm font-medium text-gray-700">Total Amount</label>
+              <input
+                type="text"
+                value={`₦${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+                readOnly
+                className="border rounded-sm h-10 pl-3 bg-gray-100"
+              />
+
+              {/* Other details */}
+              <label className="text-sm font-medium text-gray-700">Other Details</label>
+              <input
+                type="text"
+                value={otherDetails}
+                onChange={(e) => setOtherDetails(e.target.value)}
+                className="border rounded-sm w-full h-10 pl-3"
+                placeholder="Optional"
+              />
+
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
