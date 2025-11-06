@@ -265,10 +265,10 @@ const Page = () => {
             <h2 className="text-xl font-bold text-green-500 mb-4">Account Created Successfully!</h2>
             <p className="mb-6">The new customer has been saved.</p>
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/customer")}
               className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-md"
             >
-              Go to Dashboard
+              Go to Existing Customer
             </button>
           </div>
         </div>
