@@ -170,13 +170,22 @@ export default function ServiceList() {
               onChange={(e) => setNewService({ ...newService, name: e.target.value })}
             />
             <input
-              type="number"
+              type="text"
               placeholder="Charge (₦)"
               className="border p-2 rounded w-32"
-              value={newService.charge}
+              value={
+                newService.charge
+                  ? Number(newService.charge.toString().replace(/,/g, "")).toLocaleString()
+                  : ""
+              }
               aria-label="service-charge"
-              onChange={(e) => setNewService({ ...newService, charge: e.target.value })}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/,/g, ""); 
+                if (!/^\d*$/.test(raw)) return; 
+                setNewService({ ...newService, charge: raw });
+              }}
             />
+
             <input
               type="number"
               placeholder="Percentage (%)"
@@ -220,7 +229,9 @@ export default function ServiceList() {
                 services.map((service) => (
                   <tr key={service.id} className="text-center border">
                     <td className="border px-4 py-2">{service.name}</td>
-                    <td className="border px-4 py-2">{service.charge}</td>
+                    <td className="border px-4 py-2">
+                      ₦{Number(service.charge).toLocaleString()}
+                    </td>
                     <td className="border px-4 py-2">{service.percentage}%</td>
                     <td className="px-4 py-2 flex justify-center gap-2">
                       <button onClick={() => handleEdit(service)} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Edit</button>

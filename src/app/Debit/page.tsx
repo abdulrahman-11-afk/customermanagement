@@ -70,7 +70,7 @@ export default function Withdrawal() {
 
     try {
       setLoading(true);
-      const withdrawValue = parseFloat(amount);
+      const withdrawValue = parseFloat(amount.replace(/,/g, ""));
       const currentBalance = Number(customer.balance) || 0;
 
       if (withdrawValue > currentBalance) {
@@ -192,13 +192,19 @@ export default function Withdrawal() {
 
                 <div className="flex gap-3">
                   <input
-                    type="number"
+                    type="text"
                     aria-label="debit-amount"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/,/g, "");
+                      if (!/^\d*$/.test(raw)) return; 
+                      const formatted = Number(raw).toLocaleString();
+                      setAmount(formatted);
+                    }}
                     className="border rounded-sm flex-1 h-10 pl-3"
                     placeholder="Enter Amount"
                   />
+
                   <input
                     type="text"
                     value={otherDetails}
@@ -228,7 +234,7 @@ export default function Withdrawal() {
                 </p>
               )}
             </form>
-          {/* <div className="w-[50%] mt-2">
+            {/* <div className="w-[50%] mt-2">
             <div className="flex gap-2">
               <button type="button" onClick={async () => {
                 try {

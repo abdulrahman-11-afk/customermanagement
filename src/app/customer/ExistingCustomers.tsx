@@ -12,7 +12,7 @@ interface Customer {
   gender: string;
   marital_status: string;
   next_of_kin: string;
-  next_of_kin_number: string; // ✅ added
+  next_of_kin_number: string;
   address: string;
   occupation: string;
   account_number: string;
@@ -50,15 +50,15 @@ export default function ExistingCustomers() {
     else setCustomers(data || []);
   };
 
-
- useEffect(() => {
-  try {
-    const savedSearch = localStorage.getItem("customerSearch") || "";
-    setSearch(savedSearch);
-  } catch {
-    setSearch("");
-  }
-}, []);
+  useEffect(() => {
+    fetchCustomers();
+    try {
+      const savedSearch = localStorage.getItem("customerSearch") || "";
+      setSearch(savedSearch);
+    } catch {
+      setSearch("");
+    }
+  }, []);
 
   const handleDelete = async (id: number) => {
     const confirmed = confirm("Are you sure you want to delete this customer?");
@@ -84,28 +84,25 @@ export default function ExistingCustomers() {
       .update(formData)
       .eq("id", editingCustomer.id);
     if (error) console.error(error);
-      if (!editingCustomer) return;
-  if (Object.keys(formData).length === 0) return alert("No changes made");
+    if (Object.keys(formData).length === 0) return alert("No changes made");
     else {
       setCustomers((prev) =>
-        prev.map((c) =>
-          c.id === editingCustomer.id ? { ...c, ...formData } : c
-        )
+        prev.map((c) => (c.id === editingCustomer.id ? { ...c, ...formData } : c))
       );
       setEditingCustomer(null);
     }
   };
-  
 
- const filteredCustomers = customers.filter((c) =>
-  (c.name?.toLowerCase() ?? "").includes(search.toLowerCase()) ||
-  (c.account_number?.toLowerCase() ?? "").includes(search.toLowerCase())
-);
+  const filteredCustomers = customers.filter((c) =>
+    (c.name?.toLowerCase() ?? "").includes(search.toLowerCase()) ||
+    (c.account_number?.toLowerCase() ?? "").includes(search.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex">
-        <aside className="w-64 bg-gray-100 flex h-[100vh] flex-col pt-22 p-4">
+        {/* Fixed Sidebar */}
+        <aside className="w-64 bg-gray-100 left-0 fixed flex h-[100vh] flex-col pt-22 p-4 overflow-y-auto z-20">
           <nav className="flex flex-col gap-7">
             <Link href="/dashboard" className="ml-5">Dashboard</Link>
             <Link href="/newcustomer" className="ml-5">New Customer</Link>
@@ -113,19 +110,19 @@ export default function ExistingCustomers() {
               Existing Customers
             </Link>
             <Link href="/servicelist" className="ml-5">Service List</Link>
+
             {/* Banking Dropdown */}
             <div className="ml-5">
               <button
                 onClick={() => setIsBankingOpen(!isBankingOpen)}
-                className="w-full text-left"
+                className="w-full text-left cursor-pointer"
               >
                 Banking {isBankingOpen ? "▲" : "▼"}
               </button>
-
               {isBankingOpen && (
                 <div className="flex flex-col mt-4 ml-3 gap-5">
-                  <Link href="/Banking" className="ml-2">Savings</Link>
-                  <Link href="/Loan" className="ml-2">Loan Facility</Link>
+                  <Link href="/Banking" className="ml-2 cursor-pointer">Savings</Link>
+                  <Link href="/Loan" className="ml-2 cursor-pointer">Loan Facility</Link>
                 </div>
               )}
             </div>
@@ -135,10 +132,10 @@ export default function ExistingCustomers() {
           </nav>
         </aside>
 
-        <main className="flex-1 p-6">
+        {/* Main Section */}
+        <main className="flex-1 p-6 ml-64 overflow-y-auto">
           <div className="flex items-center justify-between my-6">
             <h2 className="text-3xl text-green-400 font-bold mb-4">Existing Customers</h2>
-
             <input
               type="text"
               value={search}
@@ -150,6 +147,7 @@ export default function ExistingCustomers() {
               className="border-2 border-green-400 rounded-md px-3 mr-5 py-2 mb-4 w-60 placeholder:text-green-400 focus:outline-none"
             />
           </div>
+
           <table className="min-w-full border border-gray-300">
             <thead className="bg-green-500 text-white">
               <tr>
@@ -188,13 +186,13 @@ export default function ExistingCustomers() {
                   <td className="border px-4 py-2">{customer.account_number}</td>
                   <td className="border px-4 py-2 flex flex-col gap-2">
                     <button
-                      className="bg-green-400 px-2 py-1 rounded"
+                      className="bg-green-400 px-2 py-1 rounded cursor-pointer"
                       onClick={() => handleEdit(customer)}
                     >
                       Edit
                     </button>
                     <button
-                      className="bg-red-500 text-white px-2 py-1 rounded"
+                      className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
                       onClick={() => handleDelete(customer.id)}
                     >
                       Delete
@@ -231,13 +229,13 @@ export default function ExistingCustomers() {
                 )}
                 <div className="flex justify-end gap-2 mt-4">
                   <button
-                    className="bg-green-500 text-white px-4 py-2 rounded"
+                    className="bg-green-500 text-white px-4 py-2 rounded cursor-pointer"
                     onClick={handleSave}
                   >
                     Save
                   </button>
                   <button
-                    className="bg-red-500 text-white px-4 py-2 rounded"
+                    className="bg-red-500 text-white px-4 py-2 rounded cursor-pointer"
                     onClick={() => setEditingCustomer(null)}
                   >
                     Cancel

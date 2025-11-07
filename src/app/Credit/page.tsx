@@ -297,14 +297,22 @@ export default function Credit() {
 
                 <div className="flex gap-3">
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     aria-label="credit-amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    value={
+                      amount
+                        ? Number(amount.toString().replace(/,/g, "")).toLocaleString()
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/,/g, "");
+                      if (!/^\d*\.?\d*$/.test(raw)) return; // allow only numbers and one dot
+                      setAmount(raw);
+                    }}
                     className="border rounded-sm flex-1 h-10 pl-3"
                     placeholder="Enter Amount"
                   />
+
                   <input
                     type="text"
                     value={otherDetails}
@@ -324,7 +332,7 @@ export default function Credit() {
                 {loading ? "Processing..." : "Submit"}
               </button>
 
-              
+
 
               {message && (
                 <p className={`text-center text-sm mt-2 ${messageType === "success" ? "text-green-600" : "text-red-600"}`}>
@@ -332,7 +340,7 @@ export default function Credit() {
                 </p>
               )}
 
-            
+
 
               {customer && (
                 <p className="text-sm text-gray-600">
