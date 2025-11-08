@@ -101,7 +101,6 @@ export default function ExistingCustomers() {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex">
-        {/* Fixed Sidebar */}
         <aside className="w-64 bg-gray-100 left-0 fixed flex h-[100vh] flex-col pt-22 p-4 overflow-y-auto z-20">
           <nav className="flex flex-col gap-7">
             <Link href="/dashboard" className="ml-5">Dashboard</Link>
@@ -111,13 +110,12 @@ export default function ExistingCustomers() {
             </Link>
             <Link href="/servicelist" className="ml-5">Service List</Link>
 
-            {/* Banking Dropdown */}
             <div className="ml-5">
               <button
                 onClick={() => setIsBankingOpen(!isBankingOpen)}
                 className="w-full text-left cursor-pointer"
               >
-                Banking {isBankingOpen ? "▲" : "▼"}
+                Banking {isBankingOpen ? "∧" : "∨"}
               </button>
               {isBankingOpen && (
                 <div className="flex flex-col mt-4 ml-3 gap-5">
@@ -131,8 +129,6 @@ export default function ExistingCustomers() {
             <Link href="/reports" className="ml-5">Reports</Link>
           </nav>
         </aside>
-
-        {/* Main Section */}
         <main className="flex-1 p-6 ml-64 overflow-y-auto">
           <div className="flex items-center justify-between my-6">
             <h2 className="text-3xl text-green-400 font-bold mb-4">Existing Customers</h2>

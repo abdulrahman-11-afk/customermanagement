@@ -14,7 +14,7 @@ export default function Withdrawal() {
   const [lastInsertError, setLastInsertError] = useState<any>(null);
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  //Auto-search when user stops typing account number
+  
   useEffect(() => {
     if (!accountNumber) {
       setCustomer(null);
@@ -26,12 +26,11 @@ export default function Withdrawal() {
 
     const timeout = setTimeout(() => {
       fetchCustomer(accountNumber);
-    }, 1000); // wait 1 second after typing stops
+    }, 1000);
 
     setTypingTimeout(timeout);
   }, [accountNumber]);
 
-  // 🔍 Fetch customer details
   const fetchCustomer = async (accNum: string) => {
     try {
       setLoading(true);
@@ -62,7 +61,6 @@ export default function Withdrawal() {
     }
   };
 
-  // 💸 Handle Withdrawal
   const handleWithdrawal = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!customer) return setMessage("Search for a valid customer first!");
@@ -85,7 +83,6 @@ export default function Withdrawal() {
       if (!supabase) {
         throw new Error('Supabase client not initialized');
       }
-      // First update the balance
       const { error: balanceError } = await supabase
         .from("customers")
         .update({ balance: newBalance })
@@ -93,7 +90,6 @@ export default function Withdrawal() {
 
       if (balanceError) throw balanceError;
 
-      // Then record the transaction using the provided schema
       try {
         const { error: txError } = await supabase.from("transactions").insert({
           customer_id: customer.id,
@@ -107,7 +103,6 @@ export default function Withdrawal() {
           console.error("Transaction insert error:", txError);
           setLastInsertError(txError);
 
-          // attempt rollback
           const { error: rollbackError } = await supabase
             .from("customers")
             .update({ balance: currentBalance })
@@ -143,7 +138,6 @@ export default function Withdrawal() {
   return (
     <div className="flex flex-col h-screen">
       <div className="flex">
-        {/* Sidebar */}
         <aside className="w-64 bg-gray-100 flex h-[100vh] flex-col pt-22 p-4">
           <nav className="flex flex-col gap-7">
             <a href="/dashboard" className="ml-5">Dashboard</a>
@@ -157,7 +151,6 @@ export default function Withdrawal() {
           </nav>
         </aside>
 
-        {/* Main Section */}
         <main className="flex-1 p-6">
           <div className="flex items-center justify-center">
             <h2 className="text-3xl text-green-400 font-bold my-2">
@@ -234,21 +227,6 @@ export default function Withdrawal() {
                 </p>
               )}
             </form>
-            {/* <div className="w-[50%] mt-2">
-            <div className="flex gap-2">
-              <button type="button" onClick={async () => {
-                try {
-                  setLoading(true);
-                  const { data, error } = await supabase.from('transactions').select('*').limit(1);
-                  if (error) { console.error(error); setMessage('❌ Error fetching transactions (see console)'); setTxColumns(null); }
-                  else if (!data || data.length === 0) { setTxColumns([]); setMessage('No transactions found'); }
-                  else setTxColumns(Object.keys(data[0]));
-                } finally { setLoading(false); }
-              }} className="text-xs underline text-blue-600">Inspect transaction columns</button>
-              <button type="button" onClick={() => setLastInsertError(null)} className="text-xs underline text-gray-600">Clear last error</button>
-            </div>
-
-          </div> */}
           </div>
         </main>
       </div>

@@ -87,8 +87,8 @@ export default function BankingDashboard() {
   return (
     <div className="flex flex-col h-screen">
       <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-gray-100 flex h-[100vh] flex-col pt-22 p-4">
+
+       <aside className="w-64 bg-gray-100 fixed pt-22  left-0 top-0 h-screen flex flex-col p-4 overflow-y-auto shadow-sm z-20">
           <nav className="flex flex-col gap-7">
             <Link href="/dashboard" className="ml-5">
               Dashboard
@@ -121,7 +121,7 @@ export default function BankingDashboard() {
         </aside>
 
         {/* Main Section */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 ml-64 p-6 overflow-y-auto h-screen">
           <div className="flex items-center justify-center">
             <h2 className="text-3xl cursor-pointer text-green-400 font-bold my-2">
               MIDDLECROWN MULTIVENTURES
