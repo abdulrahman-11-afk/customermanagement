@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { getSupabase } from "../lib/supabaseClient";
 
@@ -120,7 +119,6 @@ export default function LoanReport() {
   return (
     <div className="flex flex-col h-screen">
       <div className="flex">
-        {/* Sidebar */}
         <aside className="w-64 bg-gray-100 flex h-[100vh] flex-col pt-22 p-4">
           <nav className="flex flex-col gap-7">
             <a href="/dashboard" className="ml-5">Dashboard</a>
@@ -133,16 +131,12 @@ export default function LoanReport() {
             <a href="/reports" className="ml-5">Reports</a>
           </nav>
         </aside>
-
-        {/* Main Section */}
         <main className="flex-1 p-6 overflow-y-auto">
           <div className="flex items-center justify-center">
             <h2 className="text-3xl text-green-500 font-bold mb-6">
               Loan Summary Report
             </h2>
           </div>
-
-          {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
             <div className="bg-green-100 p-4 rounded-lg border">
               <h2 className="text-sm text-gray-500">
@@ -177,7 +171,6 @@ export default function LoanReport() {
             </div>
           </div>
 
-          {/* Loan & Repayment History (Current Month) */}
           <div className="bg-white p-4 rounded-lg border">
             <h2 className="text-lg font-semibold mb-4 text-gray-700">
               Loan and Repayment History — {monthName}

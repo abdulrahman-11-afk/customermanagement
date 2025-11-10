@@ -1,11 +1,8 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Dashboard() {
-
-
   return (
     <div className="flex flex-col h-screen">
       <div className="flex ">

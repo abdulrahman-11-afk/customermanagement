@@ -68,7 +68,6 @@ const Page = () => {
       balance: 0.0,
     };
 
-    // Validation
     const validationErrors: { [key: string]: string } = {};
     for (const key in customer) {
       if (key !== "balance" && !customer[key as keyof typeof customer]) {
@@ -94,8 +93,6 @@ const Page = () => {
       alert("Supabase not available");
       return;
     }
-
-    // Check duplicates
     const { data: existing, error: fetchError } = await supabase
       .from("customers")
       .select("email, phone")
@@ -114,8 +111,6 @@ const Page = () => {
       setErrors(duplicateErrors);
       return;
     }
-
-    // ✅ Insert into Supabase
     const { data, error } = await supabase
       .from("customers")
       .insert([customer])
@@ -209,8 +204,6 @@ const Page = () => {
                     <input name="next_of_kin" type="text" placeholder="Next of Kin" className="w-full border rounded-md px-3 py-2" />
                     {errors.next_of_kin && <p className="text-red-500 text-sm">{errors.next_of_kin}</p>}
                   </div>
-
-                  {/* ✅ FIXED FIELD NAME */}
                   <div>
                     <input
                       name="next_of_kin_number"

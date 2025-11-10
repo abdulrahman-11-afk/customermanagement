@@ -15,7 +15,6 @@ export default function NewRepayment() {
   const [repayments, setRepayments] = useState<any[]>([]);
   const [amountOwing, setAmountOwing] = useState(0);
 
-  // Debounced fetch when typing account number
   useEffect(() => {
     if (!accountNumber) {
       setCustomer(null);
@@ -34,15 +33,12 @@ export default function NewRepayment() {
       if (timeout) clearTimeout(timeout);
     };
   }, [accountNumber]);
-
-  // Fetch customer, loans and repayments for that customer's active loans
   const fetchCustomerAndLoans = async (accNum: string) => {
     try {
       setLoading(true);
       setMessage("");
       const supabase = getSupabase();
 
-      // Use maybeSingle to avoid throwing if no row found
       const { data: custData, error: custError } = await supabase
         .from("customers")
         .select("*")
@@ -59,8 +55,6 @@ export default function NewRepayment() {
       }
 
       setCustomer(custData);
-
-      // Ensure account_number used as string (DB expects text/varchar)
       const { data: loansData, error: loanError } = await supabase
         .from("loans")
         .select("*")
@@ -78,7 +72,6 @@ export default function NewRepayment() {
         return;
       }
 
-      // Make sure loanIds is an array of numbers
       const { data: repayData, error: repayError } = await supabase
         .from("repayments")
         .select("*")
@@ -89,8 +82,6 @@ export default function NewRepayment() {
 
       const repayArr = repayData || [];
       setRepayments(repayArr);
-
-      // calculate total owing from unpaid schedules
       const totalOwing = repayArr
         .filter((r: any) => r.status !== "Paid")
         .reduce((sum: number, r: any) => sum + (Number(r.total_payment) || 0) - (Number(r.amount_paid) || 0), 0);
@@ -105,26 +96,21 @@ export default function NewRepayment() {
     }
   };
 
-  // Comma-format input while typing (keeps only digits)
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/,/g, "").replace(/[^\d.]/g, "");
-    // Allow empty input
     if (raw === "") {
       setAmount("");
       return;
     }
-    // Prevent multiple dots
     const dotCount = (raw.match(/\./g) || []).length;
     if (dotCount > 1) return;
 
-    // format integer/decimal part
     const parts = raw.split(".");
     const intPart = parts[0] ? Number(parts[0]).toLocaleString() : "0";
-    const decimalPart = parts[1] ? "." + parts[1].slice(0, 2) : ""; // limit to 2 decimals visually
+    const decimalPart = parts[1] ? "." + parts[1].slice(0, 2) : ""; 
     setAmount(intPart + decimalPart);
   };
 
-  // Submit repayment and update schedules; mark loans paid when schedules fully paid
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
@@ -134,7 +120,6 @@ export default function NewRepayment() {
 
     const supabase = getSupabase();
 
-    // Convert formatted amount -> number
     let repaymentAmount = Number(amount.replace(/,/g, ""));
     if (isNaN(repaymentAmount) || repaymentAmount <= 0) {
       return setMessage("❌ Enter a valid repayment amount");
@@ -142,16 +127,12 @@ export default function NewRepayment() {
 
     try {
       setLoading(true);
-
-      // Work on unpaid schedules sorted by due_date (already sorted in state)
       const unpaidSchedules = repayments.filter((r) => r.status !== "Paid");
 
       if (unpaidSchedules.length === 0) {
         setMessage("✅ No unpaid schedules found.");
         return;
       }
-
-      // Build updates locally first
       const updatedSchedules: { id: number | string; amount_paid: number; status: string }[] = [];
       let remainingToAllocate = repaymentAmount;
 
@@ -189,7 +170,6 @@ export default function NewRepayment() {
         }
       }
 
-      // After updating schedules, check each active loan — if all schedules are Paid then mark loan Paid
       const { data: activeLoans } = await supabase
         .from("loans")
         .select("id")
@@ -219,7 +199,6 @@ export default function NewRepayment() {
 
       setMessage("✅ Repayment recorded and schedules updated!");
       setAmount("");
-      // refresh local state
       await fetchCustomerAndLoans(accountNumber);
     } catch (err: any) {
       console.error("handleSubmit error:", err);
@@ -229,7 +208,6 @@ export default function NewRepayment() {
     }
   };
 
-  // Format currency readout
   const formatCurrency = (n: number | string) => {
     const num = typeof n === "string" ? Number(n.replace(/,/g, "")) : n;
     if (isNaN(num)) return "₦0.00";

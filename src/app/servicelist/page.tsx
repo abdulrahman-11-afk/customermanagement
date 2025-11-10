@@ -134,7 +134,6 @@ export default function ServiceList() {
   return (
     <div className="flex flex-col h-screen">
       <div className="flex">
-        {/* Sidebar */}
         <aside className="w-64 bg-gray-100 flex h-[100vh] flex-col pt-22 p-4">
           <nav className="flex flex-col gap-7">
             <Link href="/dashboard" className="ml-5">Dashboard</Link>
@@ -147,8 +146,6 @@ export default function ServiceList() {
             <Link href="/reports" className="ml-5">Reports</Link>
           </nav>
         </aside>
-
-        {/* Main */}
         <main className="flex-1 p-6">
           <div className="flex items-center justify-center">
             <h2 className="text-3xl cursor-pointer text-green-400 font-bold my-2">

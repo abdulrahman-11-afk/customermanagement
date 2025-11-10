@@ -22,7 +22,6 @@ export default function NewLoan() {
   const [effectiveDate, setEffectiveDate] = useState("");
   const [maturityDate, setMaturityDate] = useState("");
 
-  // fetch customer after typing stops
   useEffect(() => {
     if (!accountNumber) {
       setCustomer(null);
@@ -60,7 +59,6 @@ export default function NewLoan() {
     }
   };
 
-  // Load services (loan types)
   useEffect(() => {
     const fetchServices = async () => {
       const supabase = getSupabase();
@@ -71,7 +69,6 @@ export default function NewLoan() {
     fetchServices();
   }, []);
 
-  // Recalculate interest
   useEffect(() => {
     const amount = Number(loanAmount.replace(/,/g, "")) || 0;
     const rate = Number(interestRate) || 0;
@@ -88,15 +85,13 @@ export default function NewLoan() {
     setInterestRate(service ? Number(service.percentage) || 0 : 0);
   };
 
-  // Format input with commas as user types
   const handleAmountChange = (e: any) => {
     const raw = e.target.value.replace(/,/g, "");
-    if (!/^\d*$/.test(raw)) return; // allow only numbers
+    if (!/^\d*$/.test(raw)) return;
     const formatted = Number(raw).toLocaleString("en-US");
     setLoanAmount(formatted);
   };
 
-  // Calculate maturity date
   useEffect(() => {
     if (effectiveDate) {
       const start = new Date(effectiveDate);
@@ -108,7 +103,6 @@ export default function NewLoan() {
     }
   }, [effectiveDate, duration]);
 
-  // Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -165,7 +159,6 @@ export default function NewLoan() {
   return (
     <div className="flex flex-col h-screen">
       <div className="flex">
-        {/* Sidebar */}
         <aside className="w-64 bg-gray-100 flex flex-col pt-22 p-4">
           <nav className="flex flex-col gap-7">
             <Link href="/dashboard" className="ml-5">Dashboard</Link>
@@ -179,7 +172,6 @@ export default function NewLoan() {
           </nav>
         </aside>
 
-        {/* Main content */}
         <main className="flex-1 p-6">
           <div className="flex items-center justify-center">
             <h2 className="text-3xl text-green-400 font-bold my-2">
@@ -196,7 +188,6 @@ export default function NewLoan() {
             >
               <p className="text-xl text-green-400">New Loan</p>
 
-              {/* Account number */}
               <label className="text-sm font-medium text-gray-700">Account Number</label>
               <input
                 type="text"
@@ -206,7 +197,6 @@ export default function NewLoan() {
                 placeholder="Enter customer account number"
               />
 
-              {/* Customer name */}
               <label className="text-sm font-medium text-gray-700">Customer Name</label>
               <input
                 type="text"
@@ -216,7 +206,6 @@ export default function NewLoan() {
                 placeholder="Auto-filled from customer"
               />
 
-              {/* Loan type */}
               <label className="text-sm font-medium text-gray-700">Loan Type</label>
               <select
                 value={loanType}
@@ -229,7 +218,6 @@ export default function NewLoan() {
                 ))}
               </select>
 
-              {/* Loan amount */}
               <label className="text-sm font-medium text-gray-700">Loan Amount</label>
               <input
                 type="text"
@@ -239,7 +227,6 @@ export default function NewLoan() {
                 placeholder="Enter loan amount (e.g. 500,000)"
               />
 
-              {/* Duration */}
               <label className="text-sm font-medium text-gray-700">Duration</label>
               <select
                 value={duration}
@@ -252,7 +239,6 @@ export default function NewLoan() {
                 <option value={120}>120 days</option>
               </select>
 
-              {/* Repayment method */}
               <label className="text-sm font-medium text-gray-700">Repayment Method</label>
               <select
                 value={repaymentMethod}
@@ -264,7 +250,6 @@ export default function NewLoan() {
                 <option>Bullet payment</option>
               </select>
 
-              {/* Dates */}
               <label className="text-sm font-medium text-gray-700">Effective Date</label>
               <input
                 type="date"
@@ -281,7 +266,6 @@ export default function NewLoan() {
                 className="border rounded-sm h-10 pl-3 bg-gray-100"
               />
 
-              {/* Calculated fields */}
               <label className="text-sm font-medium text-gray-700">Interest Rate</label>
               <input
                 type="text"
@@ -306,7 +290,6 @@ export default function NewLoan() {
                 className="border rounded-sm h-10 pl-3 bg-gray-100"
               />
 
-              {/* Other details */}
               <label className="text-sm font-medium text-gray-700">Other Details</label>
               <input
                 type="text"
@@ -316,7 +299,6 @@ export default function NewLoan() {
                 placeholder="Optional"
               />
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}

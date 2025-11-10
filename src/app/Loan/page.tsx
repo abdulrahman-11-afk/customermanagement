@@ -100,7 +100,6 @@ export default function Loan() {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex">
-        {/* Sidebar same as ExistingCustomers */}
         <aside className="w-64 bg-gray-100 fixed left-0 flex h-[100vh] flex-col pt-22 p-4 overflow-y-auto z-20">
           <nav className="flex flex-col gap-7">
             <Link href="/dashboard" className="ml-5">Dashboard</Link>
